@@ -1,6 +1,12 @@
 # Spotify Search APP
 
-Search Spotify with vibe-based re-ranking, **and** analyze your own listening — top tracks, top artists, top genres, and recent plays — through a small Flask + React web UI. A CLI is also included for the search side.
+A small Flask + React web app for Spotify with three modes:
+
+1. **Search** — vibe-keyword re-ranking on top of Spotify search.
+2. **Filter** — search by audio features Spotify's UI doesn't expose: BPM, key, mode, energy, danceability, valence, acousticness. Audio features come from [ReccoBeats](https://reccobeats.com), since Spotify deprecated `/audio-features` for new apps in late 2024.
+3. **My Music** — OAuth into your account to see top tracks, top artists, top genres, and recent plays.
+
+A CLI for the basic search is also included.
 
 ## Prerequisites
 
@@ -54,7 +60,8 @@ python app.py
 
 Then open http://127.0.0.1:5050 in your browser. You'll see two tabs:
 
-- **Search** — vibe-keyword search (no login required, uses client-credentials flow).
+- **Search** — vibe-keyword search (no login required).
+- **Filter** — set ranges for BPM, energy, danceability, valence, acousticness, plus optional key and mode. Backend pulls 50 candidates from Spotify, fetches audio features from ReccoBeats, drops anything outside your filters, and ranks by closeness to the range midpoints. Each result shows the matched feature values inline.
 - **My Music** — click **Connect Spotify** to authorize. After redirect, you'll see your top tracks, top artists, top genres (chips), recent plays, and aggregate stats. A time-range selector switches between *Last 4 weeks*, *Last 6 months*, and *All time*.
 
 Click **Disconnect** to clear the cached token (`.cache-user`).
@@ -87,6 +94,7 @@ python main.py "<query>" [--vibe kw1 kw2 ...] [--limit N] [--market US]
 | Method | Path             | Purpose                                                             |
 | ------ | ---------------- | ------------------------------------------------------------------- |
 | GET    | `/api/search`    | Vibe search. Query params: `q`, `vibe`, `limit`, `market`.          |
+| GET    | `/api/filter`    | Audio-feature filter. Params: `q`, `tempo_min/max`, `energy_min/max`, `danceability_min/max`, `valence_min/max`, `acousticness_min/max`, `key` (0–11), `mode` (0/1), `limit`. |
 | GET    | `/login`         | Start Spotify OAuth flow.                                           |
 | GET    | `/callback`      | OAuth redirect target — caches token to `.cache-user`.              |
 | POST   | `/logout`        | Delete cached user token.                                           |
@@ -95,12 +103,13 @@ python main.py "<query>" [--vibe kw1 kw2 ...] [--limit N] [--market US]
 
 ## Files
 
-- `app.py` — Flask server (search + analyze endpoints, OAuth)
+- `app.py` — Flask server (search + filter + analyze endpoints, OAuth)
 - `spotify_client.py` — Spotipy clients (client-credentials and user OAuth)
 - `search.py` — vibe search and re-rank logic
+- `filter_search.py` — Spotify search + ReccoBeats audio-feature filter/rank
 - `analyze.py` — pulls user listening data and aggregates genres/stats
 - `main.py` — CLI for search
-- `static/index.html` — single-page React UI (Search + My Music tabs)
+- `static/index.html` — single-page React UI (Search + Filter + My Music tabs)
 
 ## Notes
 

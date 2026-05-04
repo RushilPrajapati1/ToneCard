@@ -158,7 +158,18 @@
     function getInitialTab() {
       const sp = new URLSearchParams(window.location.search);
       const t = sp.get("tab");
-      return t === "mine" ? "mine" : "search";
+      if (t === "mine") return "mine";
+      if (t === "filter") return "filter";
+      return "search";
+    }
+
+    const KEY_NAMES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+    function keyLabel(k, mode) {
+      if (k === null || k === undefined) return "";
+      const name = KEY_NAMES[k] || "?";
+      if (mode === 0) return name + "m";
+      if (mode === 1) return name;
+      return name;
     }
 
     function getInitialAuthError() {
@@ -173,9 +184,12 @@
           <h1>Spotify · Search & Analyze</h1>
           <div className="tabs">
             <button className={`tab ${tab === "search" ? "active" : ""}`} onClick={() => setTab("search")}>Search</button>
+            <button className={`tab ${tab === "filter" ? "active" : ""}`} onClick={() => setTab("filter")}>Filter</button>
             <button className={`tab ${tab === "mine" ? "active" : ""}`} onClick={() => setTab("mine")}>My Music</button>
           </div>
-          {tab === "search" ? <SearchTab /> : <MineTab />}
+          {tab === "search" && <SearchTab />}
+          {tab === "filter" && <FilterTab />}
+          {tab === "mine" && <MineTab />}
         </div>
       );
     }
@@ -246,6 +260,172 @@
               </div>
             </div>
           ))}
+        </div>
+      );
+    }
+
+    function FilterTab() {
+      const [query, setQuery] = useState("indie rock");
+      const [tempoMin, setTempoMin] = useState(110);
+      const [tempoMax, setTempoMax] = useState(140);
+      const [energyMin, setEnergyMin] = useState(0.5);
+      const [energyMax, setEnergyMax] = useState(1.0);
+      const [danceMin, setDanceMin] = useState(0.0);
+      const [danceMax, setDanceMax] = useState(1.0);
+      const [valenceMin, setValenceMin] = useState(0.0);
+      const [valenceMax, setValenceMax] = useState(1.0);
+      const [acousticMin, setAcousticMin] = useState(0.0);
+      const [acousticMax, setAcousticMax] = useState(1.0);
+      const [keySel, setKeySel] = useState("");
+      const [modeSel, setModeSel] = useState("");
+      const [limit, setLimit] = useState(10);
+
+      const [results, setResults] = useState([]);
+      const [meta, setMeta] = useState(null);
+      const [loading, setLoading] = useState(false);
+      const [error, setError] = useState(null);
+      const [searched, setSearched] = useState(false);
+
+      async function onSubmit(e) {
+        e.preventDefault();
+        setLoading(true);
+        setError(null);
+        try {
+          const params = new URLSearchParams({
+            q: query,
+            tempo_min: String(tempoMin),
+            tempo_max: String(tempoMax),
+            energy_min: String(energyMin),
+            energy_max: String(energyMax),
+            danceability_min: String(danceMin),
+            danceability_max: String(danceMax),
+            valence_min: String(valenceMin),
+            valence_max: String(valenceMax),
+            acousticness_min: String(acousticMin),
+            acousticness_max: String(acousticMax),
+            limit: String(limit),
+          });
+          if (keySel !== "") params.set("key", keySel);
+          if (modeSel !== "") params.set("mode", modeSel);
+
+          const res = await fetch(`/api/filter?${params}`);
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+          setResults(data.results || []);
+          setMeta({ candidate_count: data.candidate_count, feature_coverage: data.feature_coverage });
+          setSearched(true);
+        } catch (err) {
+          setError(err.message);
+          setResults([]);
+          setMeta(null);
+        } finally {
+          setLoading(false);
+        }
+      }
+
+      const rangeStyle = { display: "grid", gridTemplateColumns: "120px 1fr 1fr", gap: 8, alignItems: "center", marginBottom: 8 };
+
+      return (
+        <div>
+          <form onSubmit={onSubmit}>
+            <div>
+              <label htmlFor="fq">Query (genre, mood, artist…)</label>
+              <input id="fq" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="indie rock" />
+            </div>
+
+            <div style={rangeStyle}>
+              <label>Tempo (BPM)</label>
+              <input type="number" min="40" max="220" step="1" value={tempoMin} onChange={(e) => setTempoMin(Number(e.target.value))} />
+              <input type="number" min="40" max="220" step="1" value={tempoMax} onChange={(e) => setTempoMax(Number(e.target.value))} />
+            </div>
+            <div style={rangeStyle}>
+              <label>Energy (0–1)</label>
+              <input type="number" min="0" max="1" step="0.05" value={energyMin} onChange={(e) => setEnergyMin(Number(e.target.value))} />
+              <input type="number" min="0" max="1" step="0.05" value={energyMax} onChange={(e) => setEnergyMax(Number(e.target.value))} />
+            </div>
+            <div style={rangeStyle}>
+              <label>Danceability (0–1)</label>
+              <input type="number" min="0" max="1" step="0.05" value={danceMin} onChange={(e) => setDanceMin(Number(e.target.value))} />
+              <input type="number" min="0" max="1" step="0.05" value={danceMax} onChange={(e) => setDanceMax(Number(e.target.value))} />
+            </div>
+            <div style={rangeStyle}>
+              <label>Valence (0–1)</label>
+              <input type="number" min="0" max="1" step="0.05" value={valenceMin} onChange={(e) => setValenceMin(Number(e.target.value))} />
+              <input type="number" min="0" max="1" step="0.05" value={valenceMax} onChange={(e) => setValenceMax(Number(e.target.value))} />
+            </div>
+            <div style={rangeStyle}>
+              <label>Acousticness (0–1)</label>
+              <input type="number" min="0" max="1" step="0.05" value={acousticMin} onChange={(e) => setAcousticMin(Number(e.target.value))} />
+              <input type="number" min="0" max="1" step="0.05" value={acousticMax} onChange={(e) => setAcousticMax(Number(e.target.value))} />
+            </div>
+
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 100px 120px", gap: 10 }}>
+              <div>
+                <label htmlFor="key">Key</label>
+                <select id="key" value={keySel} onChange={(e) => setKeySel(e.target.value)}>
+                  <option value="">Any</option>
+                  {KEY_NAMES.map((n, i) => (
+                    <option key={i} value={i}>{n}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label htmlFor="mode">Mode</label>
+                <select id="mode" value={modeSel} onChange={(e) => setModeSel(e.target.value)}>
+                  <option value="">Any</option>
+                  <option value="1">Major</option>
+                  <option value="0">Minor</option>
+                </select>
+              </div>
+              <div>
+                <label htmlFor="flimit">Limit</label>
+                <input id="flimit" type="number" min="1" max="20" value={limit} onChange={(e) => setLimit(Number(e.target.value))} />
+              </div>
+              <div style={{ display: "flex", alignItems: "flex-end" }}>
+                <button type="submit" disabled={loading || !query.trim()}>
+                  {loading ? "Filtering…" : "Filter"}
+                </button>
+              </div>
+            </div>
+          </form>
+
+          <div className="info" style={{ fontSize: 12 }}>
+            Audio features via <a href="https://reccobeats.com" target="_blank" rel="noreferrer" style={{ color: "var(--accent)" }}>ReccoBeats</a>. Spotify deprecated their own audio-features endpoint for new apps.
+          </div>
+
+          {error && <div className="error">Error: {error}</div>}
+          {!error && searched && results.length === 0 && (
+            <div className="empty">
+              No matches.{meta && ` Searched ${meta.candidate_count} candidates, ${meta.feature_coverage} had features.`}
+            </div>
+          )}
+          {!error && searched && results.length > 0 && meta && (
+            <div className="info" style={{ fontSize: 12 }}>
+              {results.length} of {meta.feature_coverage} feature-known tracks ({meta.candidate_count} total candidates).
+            </div>
+          )}
+
+          {results.map((t, i) => {
+            const f = t.features || {};
+            return (
+              <div key={t.url || i} className="track">
+                <div className="idx">{i + 1}</div>
+                {t.image ? <img src={t.image} alt="" /> : <div style={{ width: 56, height: 56, borderRadius: 6, background: "#222" }} />}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div className="name">{t.name}</div>
+                  <div className="meta">{t.artists.join(", ")} · {t.album}</div>
+                  <div className="meta" style={{ fontFamily: "ui-monospace, monospace", fontSize: 12 }}>
+                    {f.tempo ? `${f.tempo} BPM` : ""}
+                    {f.key !== null && f.key !== undefined ? ` · ${keyLabel(f.key, f.mode)}` : ""}
+                    {f.energy !== null && f.energy !== undefined ? ` · energy ${f.energy}` : ""}
+                    {f.danceability !== null && f.danceability !== undefined ? ` · dance ${f.danceability}` : ""}
+                    {f.valence !== null && f.valence !== undefined ? ` · valence ${f.valence}` : ""}
+                  </div>
+                  {t.url && <a href={t.url} target="_blank" rel="noreferrer">Open in Spotify ↗</a>}
+                </div>
+              </div>
+            );
+          })}
         </div>
       );
     }

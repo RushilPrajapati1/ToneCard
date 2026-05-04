@@ -3,6 +3,7 @@ import os
 from flask import Flask, jsonify, request, redirect, send_from_directory
 
 from analyze import analyze, VALID_RANGES
+from filter_search import filter_search
 from search import improved_search
 from spotify_client import get_user_client, get_user_oauth
 
@@ -115,6 +116,89 @@ def api_analyze():
     if data is None:
         return jsonify({"error": "not_authenticated"}), 401
     return jsonify(data)
+
+
+def _parse_float(name):
+    v = request.args.get(name)
+    if v is None or v == "":
+        return None
+    try:
+        return float(v)
+    except ValueError:
+        return None
+
+
+def _parse_int(name):
+    v = request.args.get(name)
+    if v is None or v == "":
+        return None
+    try:
+        return int(v)
+    except ValueError:
+        return None
+
+
+@app.route("/api/filter")
+def api_filter():
+    query = request.args.get("q", "").strip()
+    if not query:
+        return jsonify({"error": "missing q"}), 400
+
+    filters = {
+        "tempo_min": _parse_float("tempo_min"),
+        "tempo_max": _parse_float("tempo_max"),
+        "energy_min": _parse_float("energy_min"),
+        "energy_max": _parse_float("energy_max"),
+        "danceability_min": _parse_float("danceability_min"),
+        "danceability_max": _parse_float("danceability_max"),
+        "valence_min": _parse_float("valence_min"),
+        "valence_max": _parse_float("valence_max"),
+        "acousticness_min": _parse_float("acousticness_min"),
+        "acousticness_max": _parse_float("acousticness_max"),
+        "key": _parse_int("key"),
+        "mode": _parse_int("mode"),
+    }
+
+    try:
+        limit = max(1, min(int(request.args.get("limit", 10)), 20))
+    except ValueError:
+        limit = 10
+    market = request.args.get("market", "US")
+
+    try:
+        outcome = filter_search(query, filters, limit=limit, market=market)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+    response = []
+    for track, feat, _score in outcome["results"]:
+        response.append(
+            {
+                "name": track["name"],
+                "artists": [a["name"] for a in track.get("artists", [])],
+                "album": track.get("album", {}).get("name", ""),
+                "image": (track.get("album", {}).get("images") or [{}])[-1].get("url"),
+                "url": track.get("external_urls", {}).get("spotify", ""),
+                "popularity": track.get("popularity", 0),
+                "features": {
+                    "tempo": round(feat.get("tempo", 0), 1) if feat.get("tempo") is not None else None,
+                    "key": feat.get("key"),
+                    "mode": feat.get("mode"),
+                    "energy": round(feat.get("energy", 0), 2) if feat.get("energy") is not None else None,
+                    "danceability": round(feat.get("danceability", 0), 2) if feat.get("danceability") is not None else None,
+                    "valence": round(feat.get("valence", 0), 2) if feat.get("valence") is not None else None,
+                    "acousticness": round(feat.get("acousticness", 0), 2) if feat.get("acousticness") is not None else None,
+                },
+            }
+        )
+
+    return jsonify(
+        {
+            "results": response,
+            "candidate_count": outcome["candidate_count"],
+            "feature_coverage": outcome["feature_coverage"],
+        }
+    )
 
 
 if __name__ == "__main__":
