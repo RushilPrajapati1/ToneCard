@@ -1,0 +1,442 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Spotify Search & Analyze</title>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    :root {
+      --bg: #0f0f10;
+      --panel: #1a1a1d;
+      --panel-2: #141416;
+      --border: #2a2a2f;
+      --text: #f1f1f1;
+      --muted: #9a9a9f;
+      --accent: #1db954;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+    .container { max-width: 880px; margin: 0 auto; padding: 32px 20px; }
+    h1 { font-size: 22px; margin: 0 0 16px; }
+    h2 { font-size: 16px; margin: 24px 0 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+
+    .tabs {
+      display: flex;
+      gap: 4px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 20px;
+    }
+    .tab {
+      background: transparent;
+      color: var(--muted);
+      border: 0;
+      border-bottom: 2px solid transparent;
+      padding: 10px 14px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+    }
+    .tab.active { color: var(--text); border-bottom-color: var(--accent); }
+
+    form, .panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+    form { display: grid; grid-template-columns: 1fr; gap: 10px; }
+
+    label { font-size: 12px; color: var(--muted); }
+    input, select {
+      background: #0b0b0c;
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 9px 11px;
+      font-size: 14px;
+      outline: none;
+      width: 100%;
+    }
+    input:focus, select:focus { border-color: var(--accent); }
+    button {
+      background: var(--accent);
+      color: #000;
+      border: 0;
+      border-radius: 6px;
+      padding: 10px 14px;
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    button.secondary {
+      background: transparent;
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+    button:disabled { opacity: 0.6; cursor: default; }
+    .row { display: grid; grid-template-columns: 1fr 100px; gap: 10px; }
+
+    .track {
+      display: flex;
+      gap: 12px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px;
+      margin-bottom: 10px;
+      align-items: center;
+    }
+    .track img, .artist img { width: 56px; height: 56px; border-radius: 6px; object-fit: cover; background: #222; }
+    .artist img { border-radius: 50%; }
+    .track .name, .artist .name { font-weight: 600; }
+    .track .meta, .artist .meta { color: var(--muted); font-size: 13px; }
+    .track a, .artist a { color: var(--accent); text-decoration: none; font-size: 13px; }
+    .empty, .error, .info { color: var(--muted); padding: 12px 4px; font-size: 14px; }
+    .error { color: #ff6b6b; }
+    .idx { width: 22px; color: var(--muted); text-align: right; font-variant-numeric: tabular-nums; }
+
+    .me-card { display: flex; align-items: center; gap: 12px; }
+    .me-card img { width: 48px; height: 48px; border-radius: 50%; object-fit: cover; background: #222; }
+    .me-card .name { font-weight: 600; }
+    .me-card .sub { color: var(--muted); font-size: 13px; }
+    .spacer { flex: 1; }
+
+    .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    .stat {
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px;
+      text-align: center;
+    }
+    .stat .v { font-size: 20px; font-weight: 700; color: var(--accent); }
+    .stat .k { color: var(--muted); font-size: 12px; margin-top: 4px; }
+
+    .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+    .chip {
+      background: #0b0b0c;
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 5px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+    }
+    .chip .count { color: var(--muted); margin-left: 6px; }
+
+    .grid-artists { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; }
+    .artist {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+    }
+    .artist img { width: 88px; height: 88px; }
+    .artist .name { font-size: 13px; }
+    .artist .meta { font-size: 11px; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel" data-type="module">
+    const { useState, useEffect } = React;
+
+    function getInitialTab() {
+      const sp = new URLSearchParams(window.location.search);
+      const t = sp.get("tab");
+      return t === "mine" ? "mine" : "search";
+    }
+
+    function getInitialAuthError() {
+      const sp = new URLSearchParams(window.location.search);
+      return sp.get("auth_error") || null;
+    }
+
+    function App() {
+      const [tab, setTab] = useState(getInitialTab());
+      return (
+        <div className="container">
+          <h1>Spotify · Search & Analyze</h1>
+          <div className="tabs">
+            <button className={`tab ${tab === "search" ? "active" : ""}`} onClick={() => setTab("search")}>Search</button>
+            <button className={`tab ${tab === "mine" ? "active" : ""}`} onClick={() => setTab("mine")}>My Music</button>
+          </div>
+          {tab === "search" ? <SearchTab /> : <MineTab />}
+        </div>
+      );
+    }
+
+    function SearchTab() {
+      const [query, setQuery] = useState("rainy day jazz");
+      const [vibe, setVibe] = useState("cozy fireplace cafe");
+      const [limit, setLimit] = useState(10);
+      const [results, setResults] = useState([]);
+      const [loading, setLoading] = useState(false);
+      const [error, setError] = useState(null);
+      const [searched, setSearched] = useState(false);
+
+      async function onSubmit(e) {
+        e.preventDefault();
+        setLoading(true);
+        setError(null);
+        try {
+          const params = new URLSearchParams({ q: query, vibe, limit: String(limit) });
+          const res = await fetch(`/api/search?${params}`);
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+          setResults(data.results || []);
+          setSearched(true);
+        } catch (err) {
+          setError(err.message);
+          setResults([]);
+        } finally {
+          setLoading(false);
+        }
+      }
+
+      return (
+        <div>
+          <form onSubmit={onSubmit}>
+            <div>
+              <label htmlFor="q">Query</label>
+              <input id="q" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="rainy day jazz" />
+            </div>
+            <div>
+              <label htmlFor="vibe">Vibe keywords (space-separated)</label>
+              <input id="vibe" value={vibe} onChange={(e) => setVibe(e.target.value)} placeholder="cozy fireplace cafe" />
+            </div>
+            <div className="row">
+              <div>
+                <label htmlFor="limit">Limit (max 10)</label>
+                <input id="limit" type="number" min="1" max="10" value={limit} onChange={(e) => setLimit(Number(e.target.value))} />
+              </div>
+              <div style={{ display: "flex", alignItems: "flex-end" }}>
+                <button type="submit" disabled={loading || !query.trim()}>
+                  {loading ? "Searching…" : "Search"}
+                </button>
+              </div>
+            </div>
+          </form>
+
+          {error && <div className="error">Error: {error}</div>}
+          {!error && searched && results.length === 0 && <div className="empty">No results.</div>}
+
+          {results.map((t, i) => (
+            <div key={t.url || i} className="track">
+              <div className="idx">{i + 1}</div>
+              {t.image ? <img src={t.image} alt="" /> : <div style={{ width: 56, height: 56, borderRadius: 6, background: "#222" }} />}
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div className="name">{t.name}</div>
+                <div className="meta">{t.artists.join(", ")} · {t.album}</div>
+                {t.url && <a href={t.url} target="_blank" rel="noreferrer">Open in Spotify ↗</a>}
+              </div>
+            </div>
+          ))}
+        </div>
+      );
+    }
+
+    function MineTab() {
+      const [me, setMe] = useState(null);
+      const [meLoading, setMeLoading] = useState(true);
+      const [data, setData] = useState(null);
+      const [loading, setLoading] = useState(false);
+      const [error, setError] = useState(null);
+      const [timeRange, setTimeRange] = useState("medium_term");
+      const [authError] = useState(getInitialAuthError());
+
+      async function loadMe() {
+        setMeLoading(true);
+        try {
+          const res = await fetch("/api/me");
+          const j = await res.json();
+          setMe(j);
+        } catch {
+          setMe({ authenticated: false });
+        } finally {
+          setMeLoading(false);
+        }
+      }
+
+      async function loadAnalyze(range) {
+        setLoading(true);
+        setError(null);
+        try {
+          const res = await fetch(`/api/analyze?time_range=${range}`);
+          const j = await res.json();
+          if (!res.ok) {
+            if (res.status === 401) {
+              setMe({ authenticated: false });
+              setData(null);
+              return;
+            }
+            throw new Error(j.error || `HTTP ${res.status}`);
+          }
+          setData(j);
+        } catch (err) {
+          setError(err.message);
+        } finally {
+          setLoading(false);
+        }
+      }
+
+      useEffect(() => { loadMe(); }, []);
+      useEffect(() => {
+        if (me && me.authenticated) loadAnalyze(timeRange);
+      }, [me && me.authenticated, timeRange]);
+
+      async function logout() {
+        await fetch("/logout", { method: "POST" });
+        setMe({ authenticated: false });
+        setData(null);
+      }
+
+      if (meLoading) return <div className="info">Loading…</div>;
+
+      if (!me || !me.authenticated) {
+        return (
+          <div className="panel">
+            <div style={{ marginBottom: 12 }}>Connect your Spotify account to analyze your top tracks, top artists, top genres, and recent listens.</div>
+            {authError && <div className="error" style={{ marginBottom: 8 }}>Auth error: {authError}</div>}
+            <a href="/login"><button>Connect Spotify</button></a>
+            <div className="info" style={{ marginTop: 10, fontSize: 12 }}>
+              Note: add <code>http://127.0.0.1:5050/callback</code> as a Redirect URI in your Spotify app settings.
+            </div>
+          </div>
+        );
+      }
+
+      const rangeLabel = {
+        short_term: "Last 4 weeks",
+        medium_term: "Last 6 months",
+        long_term: "All time",
+      };
+
+      return (
+        <div>
+          <div className="panel me-card">
+            {me.image ? <img src={me.image} alt="" /> : <div style={{ width: 48, height: 48, borderRadius: "50%", background: "#222" }} />}
+            <div>
+              <div className="name">{me.display_name}</div>
+              <div className="sub">{me.country || ""}</div>
+            </div>
+            <div className="spacer" />
+            <button className="secondary" onClick={logout}>Disconnect</button>
+          </div>
+
+          <div className="panel">
+            <label htmlFor="range">Time range</label>
+            <select id="range" value={timeRange} onChange={(e) => setTimeRange(e.target.value)}>
+              <option value="short_term">Last 4 weeks</option>
+              <option value="medium_term">Last 6 months</option>
+              <option value="long_term">All time</option>
+            </select>
+          </div>
+
+          {error && <div className="error">Error: {error}</div>}
+          {loading && <div className="info">Analyzing your music…</div>}
+
+          {data && !loading && (
+            <div>
+              <div className="stats">
+                <div className="stat">
+                  <div className="v">{data.stats.avg_track_popularity}</div>
+                  <div className="k">Avg track popularity</div>
+                </div>
+                <div className="stat">
+                  <div className="v">{data.stats.avg_artist_popularity}</div>
+                  <div className="k">Avg artist popularity</div>
+                </div>
+                <div className="stat">
+                  <div className="v">{data.stats.unique_genres}</div>
+                  <div className="k">Unique genres</div>
+                </div>
+              </div>
+
+              <h2>Top genres · {rangeLabel[timeRange]}</h2>
+              {data.top_genres.length === 0 ? (
+                <div className="empty">No genres found.</div>
+              ) : (
+                <div className="panel">
+                  <div className="chips">
+                    {data.top_genres.map((g) => (
+                      <span key={g.genre} className="chip">
+                        {g.genre}<span className="count">×{g.count}</span>
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <h2>Top artists</h2>
+              {data.top_artists.length === 0 ? (
+                <div className="empty">No top artists yet.</div>
+              ) : (
+                <div className="grid-artists">
+                  {data.top_artists.map((a, i) => (
+                    <a key={a.url || i} href={a.url} target="_blank" rel="noreferrer" className="artist" style={{ textDecoration: "none", color: "inherit" }}>
+                      {a.image ? <img src={a.image} alt="" /> : <div style={{ width: 88, height: 88, borderRadius: "50%", background: "#222" }} />}
+                      <div className="name">{a.name}</div>
+                      <div className="meta">pop {a.popularity}</div>
+                    </a>
+                  ))}
+                </div>
+              )}
+
+              <h2>Top tracks</h2>
+              {data.top_tracks.length === 0 ? (
+                <div className="empty">No top tracks yet.</div>
+              ) : (
+                data.top_tracks.map((t, i) => (
+                  <div key={t.url || i} className="track">
+                    <div className="idx">{i + 1}</div>
+                    {t.image ? <img src={t.image} alt="" /> : <div style={{ width: 56, height: 56, borderRadius: 6, background: "#222" }} />}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div className="name">{t.name}</div>
+                      <div className="meta">{t.artists.join(", ")} · {t.album}</div>
+                      {t.url && <a href={t.url} target="_blank" rel="noreferrer">Open in Spotify ↗</a>}
+                    </div>
+                  </div>
+                ))
+              )}
+
+              <h2>Recently played</h2>
+              {data.recent.length === 0 ? (
+                <div className="empty">Nothing recent.</div>
+              ) : (
+                data.recent.map((t, i) => (
+                  <div key={(t.url || "") + i} className="track">
+                    <div className="idx">{i + 1}</div>
+                    {t.image ? <img src={t.image} alt="" /> : <div style={{ width: 56, height: 56, borderRadius: 6, background: "#222" }} />}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div className="name">{t.name}</div>
+                      <div className="meta">{t.artists.join(", ")} · {t.album}</div>
+                      {t.url && <a href={t.url} target="_blank" rel="noreferrer">Open in Spotify ↗</a>}
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+  </script>
+</body>
+</html>
