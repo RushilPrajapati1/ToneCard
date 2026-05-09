@@ -53,6 +53,27 @@ def _fetch_features(reccobeats_ids):
     return out
 
 
+def reccobeats_recommendations(seed_reccobeats_ids, size=30):
+    """Ask ReccoBeats for tracks similar to the given seed track ids (max 5 seeds)."""
+    seeds = seed_reccobeats_ids[:5]
+    if not seeds:
+        return []
+    r = requests.get(
+        f"{RECCOBEATS_BASE}/track/recommendation",
+        params={"seeds": ",".join(seeds), "size": size},
+        timeout=TIMEOUT,
+    )
+    r.raise_for_status()
+    return r.json().get("content") or []
+
+
+def spotify_id_from_href(href):
+    if not href:
+        return None
+    tail = href.rsplit("/", 1)[-1]
+    return tail or None
+
+
 def get_features_for_spotify_ids(spotify_ids):
     """Fetch ReccoBeats audio features for a list of Spotify track IDs.
 

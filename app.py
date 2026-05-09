@@ -2,7 +2,13 @@ import os
 
 from flask import Flask, jsonify, request, redirect, send_from_directory
 
-from analyze import analyze, VALID_RANGES
+from analyze import (
+    analyze,
+    list_playlists,
+    playlist_recommendations,
+    playlist_stats,
+    VALID_RANGES,
+)
 from filter_search import filter_search
 from search import improved_search
 from spotify_client import get_user_client, get_user_oauth
@@ -111,6 +117,43 @@ def api_analyze():
 
     try:
         data = analyze(time_range=time_range, limit=limit)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    if data is None:
+        return jsonify({"error": "not_authenticated"}), 401
+    return jsonify(data)
+
+
+@app.route("/api/playlists")
+def api_playlists():
+    try:
+        data = list_playlists()
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    if data is None:
+        return jsonify({"error": "not_authenticated"}), 401
+    return jsonify({"playlists": data})
+
+
+@app.route("/api/playlists/<playlist_id>/stats")
+def api_playlist_stats(playlist_id):
+    try:
+        data = playlist_stats(playlist_id)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    if data is None:
+        return jsonify({"error": "not_authenticated"}), 401
+    return jsonify(data)
+
+
+@app.route("/api/playlists/<playlist_id>/recommendations")
+def api_playlist_recommendations(playlist_id):
+    try:
+        count = max(1, min(int(request.args.get("count", 10)), 25))
+    except ValueError:
+        count = 10
+    try:
+        data = playlist_recommendations(playlist_id, count=count)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
     if data is None:

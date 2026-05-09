@@ -28,24 +28,6 @@
     h1 { font-size: 22px; margin: 0 0 16px; }
     h2 { font-size: 16px; margin: 24px 0 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
 
-    .tabs {
-      display: flex;
-      gap: 4px;
-      border-bottom: 1px solid var(--border);
-      margin-bottom: 20px;
-    }
-    .tab {
-      background: transparent;
-      color: var(--muted);
-      border: 0;
-      border-bottom: 2px solid transparent;
-      padding: 10px 14px;
-      cursor: pointer;
-      font-size: 14px;
-      font-weight: 600;
-    }
-    .tab.active { color: var(--text); border-bottom-color: var(--accent); }
-
     form, .panel {
       background: var(--panel);
       border: 1px solid var(--border);
@@ -155,14 +137,6 @@
   <script type="text/babel" data-type="module">
     const { useState, useEffect } = React;
 
-    function getInitialTab() {
-      const sp = new URLSearchParams(window.location.search);
-      const t = sp.get("tab");
-      if (t === "mine") return "mine";
-      if (t === "filter") return "filter";
-      return "search";
-    }
-
     const KEY_NAMES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
     function keyLabel(k, mode) {
       if (k === null || k === undefined) return "";
@@ -178,18 +152,10 @@
     }
 
     function App() {
-      const [tab, setTab] = useState(getInitialTab());
       return (
         <div className="container">
-          <h1>Spotify · Search & Analyze</h1>
-          <div className="tabs">
-            <button className={`tab ${tab === "search" ? "active" : ""}`} onClick={() => setTab("search")}>Search</button>
-            <button className={`tab ${tab === "filter" ? "active" : ""}`} onClick={() => setTab("filter")}>Filter</button>
-            <button className={`tab ${tab === "mine" ? "active" : ""}`} onClick={() => setTab("mine")}>My Music</button>
-          </div>
-          {tab === "search" && <SearchTab />}
-          {tab === "filter" && <FilterTab />}
-          {tab === "mine" && <MineTab />}
+          <h1>Spotify · My Music</h1>
+          <MineTab />
         </div>
       );
     }
@@ -438,6 +404,52 @@
       const [error, setError] = useState(null);
       const [timeRange, setTimeRange] = useState("medium_term");
       const [authError] = useState(getInitialAuthError());
+      const [playlists, setPlaylists] = useState([]);
+      const [playlistsLoading, setPlaylistsLoading] = useState(false);
+      const [playlistStats, setPlaylistStats] = useState({});
+      const [playlistLoadingId, setPlaylistLoadingId] = useState(null);
+      const [playlistRecs, setPlaylistRecs] = useState({});
+      const [playlistRecsLoadingId, setPlaylistRecsLoadingId] = useState(null);
+      const [tab, setTab] = useState("library");
+
+      async function loadPlaylists() {
+        setPlaylistsLoading(true);
+        try {
+          const res = await fetch("/api/playlists");
+          const j = await res.json();
+          if (res.ok) setPlaylists(j.playlists || []);
+        } catch {
+          /* ignore */
+        } finally {
+          setPlaylistsLoading(false);
+        }
+      }
+
+      async function analyzePlaylist(id) {
+        setPlaylistLoadingId(id);
+        try {
+          const res = await fetch(`/api/playlists/${id}/stats`);
+          const j = await res.json();
+          if (res.ok) setPlaylistStats((prev) => ({ ...prev, [id]: j }));
+        } catch {
+          /* ignore */
+        } finally {
+          setPlaylistLoadingId(null);
+        }
+      }
+
+      async function findSimilar(id) {
+        setPlaylistRecsLoadingId(id);
+        try {
+          const res = await fetch(`/api/playlists/${id}/recommendations?count=10`);
+          const j = await res.json();
+          if (res.ok) setPlaylistRecs((prev) => ({ ...prev, [id]: j }));
+        } catch {
+          /* ignore */
+        } finally {
+          setPlaylistRecsLoadingId(null);
+        }
+      }
 
       async function loadMe() {
         setMeLoading(true);
@@ -478,11 +490,17 @@
       useEffect(() => {
         if (me && me.authenticated) loadAnalyze(timeRange);
       }, [me && me.authenticated, timeRange]);
+      useEffect(() => {
+        if (me && me.authenticated) loadPlaylists();
+      }, [me && me.authenticated]);
 
       async function logout() {
         await fetch("/logout", { method: "POST" });
         setMe({ authenticated: false });
         setData(null);
+        setPlaylists([]);
+        setPlaylistStats({});
+        setPlaylistRecs({});
       }
 
       if (meLoading) return <div className="info">Loading…</div>;
@@ -518,51 +536,46 @@
             <button className="secondary" onClick={logout}>Disconnect</button>
           </div>
 
-          <div className="panel">
-            <label htmlFor="range">Time range</label>
-            <select id="range" value={timeRange} onChange={(e) => setTimeRange(e.target.value)}>
-              <option value="short_term">Last 4 weeks</option>
-              <option value="medium_term">Last 6 months</option>
-              <option value="long_term">All time</option>
-            </select>
+          <div className="tabs">
+            <button className={`tab ${tab === "library" ? "active" : ""}`} onClick={() => setTab("library")}>Library</button>
+            <button className={`tab ${tab === "stats" ? "active" : ""}`} onClick={() => setTab("stats")}>Stats</button>
           </div>
 
           {error && <div className="error">Error: {error}</div>}
-          {loading && <div className="info">Analyzing your music…</div>}
+          {loading && tab === "stats" && <div className="info">Analyzing your music…</div>}
 
-          {data && !loading && (
+          {tab === "stats" && data && !loading && (
             <div>
-              <div className="stats">
-                <div className="stat">
-                  <div className="v">{data.stats.avg_track_popularity}</div>
-                  <div className="k">Avg track popularity</div>
-                </div>
-                <div className="stat">
-                  <div className="v">{data.stats.avg_artist_popularity}</div>
-                  <div className="k">Avg artist popularity</div>
-                </div>
-                <div className="stat">
-                  <div className="v">{data.stats.unique_genres}</div>
-                  <div className="k">Unique genres</div>
-                </div>
+              <div className="panel">
+                <label htmlFor="range">Time range</label>
+                <select id="range" value={timeRange} onChange={(e) => setTimeRange(e.target.value)}>
+                  <option value="short_term">Last 4 weeks</option>
+                  <option value="medium_term">Last 6 months</option>
+                  <option value="long_term">All time</option>
+                </select>
               </div>
 
-              <h2>Top genres · {rangeLabel[timeRange]}</h2>
-              {data.top_genres.length === 0 ? (
-                <div className="empty">No genres found.</div>
-              ) : (
-                <div className="panel">
-                  <div className="chips">
-                    {data.top_genres.map((g) => (
-                      <span key={g.genre} className="chip">
-                        {g.genre}<span className="count">×{g.count}</span>
-                      </span>
-                    ))}
-                  </div>
+              <div className="stats">
+                <div className="stat">
+                  <div className="v">{data.stats.avg_tempo ?? "—"}</div>
+                  <div className="k">Avg tempo (BPM)</div>
+                </div>
+                <div className="stat">
+                  <div className="v">{data.stats.avg_energy ?? "—"}</div>
+                  <div className="k">Avg energy</div>
+                </div>
+                <div className="stat">
+                  <div className="v">{data.stats.avg_danceability ?? "—"}</div>
+                  <div className="k">Avg danceability</div>
+                </div>
+              </div>
+              {data.stats.feature_total > 0 && (
+                <div className="info" style={{ fontSize: 12, padding: "6px 4px 0" }}>
+                  Audio features for {data.stats.feature_coverage}/{data.stats.feature_total} top tracks via ReccoBeats.
                 </div>
               )}
 
-              <h2>Top artists</h2>
+              <h2>Top artists · {rangeLabel[timeRange]}</h2>
               {data.top_artists.length === 0 ? (
                 <div className="empty">No top artists yet.</div>
               ) : (
@@ -571,7 +584,6 @@
                     <a key={a.url || i} href={a.url} target="_blank" rel="noreferrer" className="artist" style={{ textDecoration: "none", color: "inherit" }}>
                       {a.image ? <img src={a.image} alt="" /> : <div style={{ width: 88, height: 88, borderRadius: "50%", background: "#222" }} />}
                       <div className="name">{a.name}</div>
-                      <div className="meta">pop {a.popularity}</div>
                     </a>
                   ))}
                 </div>
@@ -593,9 +605,109 @@
                   </div>
                 ))
               )}
+            </div>
+          )}
+
+          {tab === "library" && (
+            <div>
+              <h2>Your playlists</h2>
+              {playlistsLoading ? (
+                <div className="info">Loading playlists…</div>
+              ) : playlists.length === 0 ? (
+                <div className="empty">No playlists.</div>
+              ) : (
+                playlists.map((p) => {
+                  const s = playlistStats[p.id];
+                  const recs = playlistRecs[p.id];
+                  const recsLoading = playlistRecsLoadingId === p.id;
+                  return (
+                    <div key={p.id} style={{ marginBottom: 10 }}>
+                      <div className="track" style={{ marginBottom: 0 }}>
+                        {p.image ? <img src={p.image} alt="" /> : <div style={{ width: 56, height: 56, borderRadius: 6, background: "#222" }} />}
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div className="name">{p.name}</div>
+                          <div className="meta">{p.owner}</div>
+                          {s && (
+                            s.track_count === 0 ? (
+                              <div className="meta" style={{ fontSize: 12 }}>Empty playlist.</div>
+                            ) : (
+                              <div className="meta" style={{ fontFamily: "ui-monospace, monospace", fontSize: 12, marginTop: 6 }}>
+                            {s.stats.avg_tempo ?? "—"} BPM · energy {s.stats.avg_energy ?? "—"} · dance {s.stats.avg_danceability ?? "—"}
+                                <span style={{ opacity: 0.6 }}> ({s.feature_coverage}/{s.track_count} tracks{s.track_count >= s.max_tracks ? `, capped at ${s.max_tracks}` : ""})</span>
+                              </div>
+                            )
+                          )}
+                          {p.url && <a href={p.url} target="_blank" rel="noreferrer">Open in Spotify ↗</a>}
+                        </div>
+                        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                          {!s && (
+                            <button
+                              className="secondary"
+                              onClick={() => analyzePlaylist(p.id)}
+                              disabled={playlistLoadingId === p.id}
+                            >
+                              {playlistLoadingId === p.id ? "…" : "Analyze"}
+                            </button>
+                          )}
+                          {s && s.track_count > 0 && !recs && (
+                            <button
+                              className="secondary"
+                              onClick={() => findSimilar(p.id)}
+                              disabled={recsLoading}
+                            >
+                              {recsLoading ? "Finding…" : "Find similar"}
+                            </button>
+                          )}
+                        </div>
+                      </div>
+
+                      {recs && (
+                        <div className="panel" style={{ marginTop: 8, marginBottom: 0 }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "0 0 8px" }}>
+                            <div className="info" style={{ fontSize: 12, padding: 0, flex: 1 }}>
+                              Similar tracks (avg target: {recs.playlist_stats?.avg_tempo ?? "—"} BPM · energy {recs.playlist_stats?.avg_energy ?? "—"} · dance {recs.playlist_stats?.avg_danceability ?? "—"})
+                            </div>
+                            <button
+                              className="secondary"
+                              style={{ padding: "5px 10px", fontSize: 12 }}
+                              onClick={() => findSimilar(p.id)}
+                              disabled={recsLoading}
+                            >
+                              {recsLoading ? "Rolling…" : "Re-roll"}
+                            </button>
+                          </div>
+                          {recs.recommendations.length === 0 ? (
+                            <div className="empty">No similar tracks found.</div>
+                          ) : (
+                            recs.recommendations.map((r, i) => {
+                              const f = r.features || {};
+                              return (
+                                <div key={r.id || i} className="track">
+                                  <div className="idx">{i + 1}</div>
+                                  {r.image ? <img src={r.image} alt="" /> : <div style={{ width: 56, height: 56, borderRadius: 6, background: "#222" }} />}
+                                  <div style={{ flex: 1, minWidth: 0 }}>
+                                    <div className="name">{r.name}</div>
+                                    <div className="meta">{r.artists.join(", ")}{r.album ? ` · ${r.album}` : ""}</div>
+                                    <div className="meta" style={{ fontFamily: "ui-monospace, monospace", fontSize: 12 }}>
+                                      {f.tempo ?? "—"} BPM · energy {f.energy ?? "—"} · dance {f.danceability ?? "—"}
+                                    </div>
+                                    {r.url && <a href={r.url} target="_blank" rel="noreferrer">Open in Spotify ↗</a>}
+                                  </div>
+                                </div>
+                              );
+                            })
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })
+              )}
 
               <h2>Recently played</h2>
-              {data.recent.length === 0 ? (
+              {!data ? (
+                <div className="info">Loading…</div>
+              ) : data.recent.length === 0 ? (
                 <div className="empty">Nothing recent.</div>
               ) : (
                 data.recent.map((t, i) => (
