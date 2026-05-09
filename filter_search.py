@@ -1,6 +1,7 @@
 import requests
 
 from spotify_client import get_client
+from vibe_profile import build_vibe_profile, feature_closeness_score
 
 RECCOBEATS_BASE = "https://api.reccobeats.com/v1"
 TIMEOUT = 15
@@ -102,7 +103,7 @@ def _passes(feat, filters):
     return True
 
 
-def _score(feat, filters):
+def _score(feat, filters, vibe_profile=None):
     """Lower is better — sum of normalized distances from each range midpoint."""
     score = 0.0
     for key, lo_k, hi_k, span in NUMERIC_FILTERS:
@@ -114,6 +115,10 @@ def _score(feat, filters):
             continue
         midpoint = (lo + hi) / 2
         score += abs(v - midpoint) / span
+    if vibe_profile:
+        # Convert closeness [0..1] to distance [1..0], blended with filter score.
+        vibe_distance = 1.0 - feature_closeness_score(feat, vibe_profile["targets"])
+        score += 0.75 * vibe_distance
     return score
 
 
@@ -142,13 +147,14 @@ def _paginated_search(sp, query, total, market):
     return items[:total]
 
 
-def filter_search(query, filters, limit=10, candidate_pool=50, market="US"):
+def filter_search(query, filters, limit=10, candidate_pool=50, market="US", vibe_keywords=None):
     """Search Spotify, fetch audio features from ReccoBeats, filter and rank."""
     sp = get_client()
     candidate_pool = max(min(candidate_pool, 50), limit)
     items = _paginated_search(sp, query, candidate_pool, market)
     if not items:
         return {"results": [], "candidate_count": 0, "feature_coverage": 0}
+    vibe_profile = build_vibe_profile(vibe_keywords)
 
     spotify_ids = [t["id"] for t in items if t.get("id")]
     features = get_features_for_spotify_ids(spotify_ids)
@@ -161,7 +167,7 @@ def filter_search(query, filters, limit=10, candidate_pool=50, market="US"):
         feat = features[sid]
         if not _passes(feat, filters):
             continue
-        enriched.append((t, feat, _score(feat, filters)))
+        enriched.append((t, feat, _score(feat, filters, vibe_profile=vibe_profile)))
 
     enriched.sort(key=lambda x: x[2])
     return {

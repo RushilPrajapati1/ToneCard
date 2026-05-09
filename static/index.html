@@ -3,518 +3,886 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Spotify Search & Analyze</title>
-  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <title>Tonecard · vibe search & listening stats</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet" />
+
+  <script>
+    (function() {
+      try {
+        var saved = localStorage.getItem("tonecard-theme");
+        var theme = saved || (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+        document.documentElement.setAttribute("data-theme", theme);
+      } catch (e) {}
+    })();
+  </script>
+
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
   <style>
     :root {
-      --bg: #0f0f10;
-      --panel: #1a1a1d;
-      --panel-2: #141416;
-      --border: #2a2a2f;
-      --text: #f1f1f1;
-      --muted: #9a9a9f;
-      --accent: #1db954;
+      --paper: oklch(0.985 0.005 85);
+      --paper-2: oklch(0.965 0.006 85);
+      --ink: oklch(0.18 0.01 80);
+      --ink-hover: oklch(0.28 0.01 80);
+      --ink-2: oklch(0.32 0.01 80);
+      --muted: oklch(0.55 0.012 80);
+      --line: oklch(0.905 0.006 85);
+      --line-2: oklch(0.86 0.008 85);
+      --accent: oklch(0.62 0.19 28);
+      --accent-soft: oklch(0.94 0.04 28);
+      --accent-ink: oklch(0.4 0.12 28);
+      --focus-ring: oklch(0.18 0.01 80 / 0.10);
+      --shadow: 0 1px 0 oklch(0.85 0.01 80 / 0.5), 0 8px 24px -12px oklch(0.2 0.02 80 / 0.18);
+      --r-sm: 8px;
+      --r-md: 14px;
+      --r-lg: 22px;
+      color-scheme: light;
+    }
+    :root[data-theme="dark"] {
+      --paper: oklch(0.18 0.008 260);
+      --paper-2: oklch(0.23 0.009 260);
+      --ink: oklch(0.96 0.005 85);
+      --ink-hover: oklch(0.86 0.005 85);
+      --ink-2: oklch(0.82 0.006 85);
+      --muted: oklch(0.64 0.012 85);
+      --line: oklch(0.30 0.009 260);
+      --line-2: oklch(0.38 0.010 260);
+      --accent: oklch(0.74 0.17 28);
+      --accent-soft: oklch(0.32 0.08 28);
+      --accent-ink: oklch(0.86 0.16 28);
+      --focus-ring: oklch(0.96 0.005 85 / 0.18);
+      --shadow: 0 1px 0 oklch(0.10 0.01 260 / 0.6), 0 8px 24px -12px oklch(0.04 0.01 260 / 0.6);
+      color-scheme: dark;
     }
     * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
     body {
-      margin: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      background: var(--bg);
-      color: var(--text);
+      font-family: "Geist", -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+      background: var(--paper);
+      color: var(--ink);
+      font-size: 15px;
+      line-height: 1.45;
+      -webkit-font-smoothing: antialiased;
+      letter-spacing: -0.005em;
     }
-    .container { max-width: 880px; margin: 0 auto; padding: 32px 20px; }
-    h1 { font-size: 22px; margin: 0 0 16px; }
-    h2 { font-size: 16px; margin: 24px 0 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+    .mono { font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace; font-feature-settings: "tnum", "ss01"; }
+    .serif { font-family: "Instrument Serif", "Times New Roman", serif; font-style: italic; font-weight: 400; letter-spacing: -0.01em; }
 
-    form, .panel {
-      background: var(--panel);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 16px;
-      margin-bottom: 16px;
+    .shell {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 28px 36px 96px;
     }
-    form { display: grid; grid-template-columns: 1fr; gap: 10px; }
+    @media (max-width: 720px) {
+      .shell { padding: 20px 18px 64px; }
+    }
 
-    label { font-size: 12px; color: var(--muted); }
-    input, select {
-      background: #0b0b0c;
-      color: var(--text);
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      padding: 9px 11px;
-      font-size: 14px;
-      outline: none;
-      width: 100%;
-    }
-    input:focus, select:focus { border-color: var(--accent); }
-    button {
-      background: var(--accent);
-      color: #000;
-      border: 0;
-      border-radius: 6px;
-      padding: 10px 14px;
-      font-weight: 600;
-      cursor: pointer;
-      font-size: 14px;
-    }
-    button.secondary {
-      background: transparent;
-      color: var(--text);
-      border: 1px solid var(--border);
-    }
-    button:disabled { opacity: 0.6; cursor: default; }
-    .row { display: grid; grid-template-columns: 1fr 100px; gap: 10px; }
-
-    .track {
+    .topbar {
       display: flex;
-      gap: 12px;
-      background: var(--panel);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 12px;
-      margin-bottom: 10px;
       align-items: center;
+      gap: 18px;
+      padding: 10px 0 28px;
+      border-bottom: 1px solid var(--line);
+      margin-bottom: 32px;
     }
-    .track img, .artist img { width: 56px; height: 56px; border-radius: 6px; object-fit: cover; background: #222; }
-    .artist img { border-radius: 50%; }
-    .track .name, .artist .name { font-weight: 600; }
-    .track .meta, .artist .meta { color: var(--muted); font-size: 13px; }
-    .track a, .artist a { color: var(--accent); text-decoration: none; font-size: 13px; }
-    .empty, .error, .info { color: var(--muted); padding: 12px 4px; font-size: 14px; }
-    .error { color: #ff6b6b; }
-    .idx { width: 22px; color: var(--muted); text-align: right; font-variant-numeric: tabular-nums; }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 600;
+      font-size: 17px;
+      letter-spacing: -0.02em;
+    }
+    .brand-mark {
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      background: var(--ink);
+      position: relative;
+      display: grid;
+      place-items: center;
+    }
+    .brand-mark::before, .brand-mark::after {
+      content: "";
+      position: absolute;
+      background: var(--paper);
+    }
+    .brand-mark::before { width: 3px; height: 14px; border-radius: 2px; transform: translateX(-4px); }
+    .brand-mark::after { width: 3px; height: 8px; border-radius: 2px; transform: translateX(4px); }
 
-    .me-card { display: flex; align-items: center; gap: 12px; }
-    .me-card img { width: 48px; height: 48px; border-radius: 50%; object-fit: cover; background: #222; }
-    .me-card .name { font-weight: 600; }
-    .me-card .sub { color: var(--muted); font-size: 13px; }
+    .brand small { color: var(--muted); font-weight: 400; font-size: 13px; margin-left: 2px; }
+
     .spacer { flex: 1; }
 
-    .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-    .stat {
-      background: var(--panel-2);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 12px;
-      text-align: center;
-    }
-    .stat .v { font-size: 20px; font-weight: 700; color: var(--accent); }
-    .stat .k { color: var(--muted); font-size: 12px; margin-top: 4px; }
-
-    .chips { display: flex; flex-wrap: wrap; gap: 6px; }
-    .chip {
-      background: #0b0b0c;
-      border: 1px solid var(--border);
-      color: var(--text);
-      padding: 5px 10px;
+    .theme-toggle {
+      appearance: none;
+      width: 36px;
+      height: 36px;
+      display: inline-grid;
+      place-items: center;
+      background: var(--paper-2);
+      color: var(--ink-2);
+      border: 1px solid var(--line);
       border-radius: 999px;
-      font-size: 12px;
+      cursor: pointer;
+      transition: color 120ms ease, border-color 120ms ease, background 120ms ease;
     }
-    .chip .count { color: var(--muted); margin-left: 6px; }
+    .theme-toggle:hover { color: var(--ink); border-color: var(--ink-2); }
+    .theme-toggle svg { width: 16px; height: 16px; display: block; }
 
-    .grid-artists { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; }
-    .artist {
-      background: var(--panel);
-      border: 1px solid var(--border);
+    .tabs {
+      display: inline-flex;
+      gap: 2px;
+      padding: 4px;
+      background: var(--paper-2);
+      border: 1px solid var(--line);
+      border-radius: 999px;
+    }
+    .tab {
+      appearance: none;
+      border: 0;
+      background: transparent;
+      color: var(--ink-2);
+      font-family: inherit;
+      font-size: 13.5px;
+      font-weight: 500;
+      padding: 8px 16px;
+      border-radius: 999px;
+      cursor: pointer;
+      letter-spacing: -0.005em;
+      transition: background 120ms ease, color 120ms ease;
+    }
+    .tab:hover { color: var(--ink); }
+    .tab.active {
+      background: var(--ink);
+      color: var(--paper);
+    }
+
+    .hero { margin-bottom: 28px; }
+    .eyebrow {
+      font-size: 12px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 10px;
+    }
+    h1.display {
+      font-family: "Geist", inherit;
+      font-weight: 600;
+      letter-spacing: -0.035em;
+      font-size: clamp(36px, 5vw, 56px);
+      line-height: 1.02;
+      margin: 0 0 10px;
+    }
+    h1.display em { font-family: "Instrument Serif", serif; font-style: italic; font-weight: 400; color: var(--accent); letter-spacing: -0.01em; padding-right: 4px; }
+    .lede { color: var(--muted); font-size: 16px; max-width: 56ch; margin: 0; }
+
+    h2 {
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin: 32px 0 14px;
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+    }
+    h2 .count { color: var(--ink-2); font-weight: 500; letter-spacing: -0.005em; text-transform: none; font-size: 13px; }
+
+    .card {
+      background: var(--paper-2);
+      border: 1px solid var(--line);
+      border-radius: var(--r-lg);
+      padding: 22px;
+    }
+
+    .field { display: flex; flex-direction: column; gap: 6px; }
+    .field label {
+      font-size: 11.5px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      font-weight: 500;
+    }
+    input[type="text"], input[type="number"], input[type="search"], select {
+      appearance: none;
+      width: 100%;
+      background: var(--paper);
+      color: var(--ink);
+      border: 1px solid var(--line-2);
+      border-radius: var(--r-sm);
+      padding: 11px 13px;
+      font-family: inherit;
+      font-size: 15px;
+      letter-spacing: -0.005em;
+      outline: none;
+      transition: border-color 120ms ease, box-shadow 120ms ease;
+    }
+    input.mono, select.mono { font-family: "JetBrains Mono", monospace; font-size: 13.5px; }
+    input:focus, select:focus {
+      border-color: var(--ink);
+      box-shadow: 0 0 0 3px var(--focus-ring);
+    }
+
+    .search-row {
+      display: grid;
+      grid-template-columns: 1.4fr 1fr auto;
+      gap: 10px;
+      align-items: end;
+    }
+    @media (max-width: 720px) {
+      .search-row { grid-template-columns: 1fr; }
+    }
+
+    button.primary, a.primary {
+      appearance: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      background: var(--ink);
+      color: var(--paper);
+      border: 0;
+      border-radius: var(--r-sm);
+      padding: 11px 18px;
+      font-family: inherit;
+      font-weight: 500;
+      font-size: 14px;
+      letter-spacing: -0.005em;
+      cursor: pointer;
+      text-decoration: none;
+      transition: transform 120ms ease, background 120ms ease;
+      height: 42px;
+    }
+    button.primary:hover:not(:disabled), a.primary:hover { background: var(--ink-hover); }
+    button.primary:active { transform: translateY(1px); }
+    button.primary:disabled { opacity: 0.45; cursor: default; }
+
+    button.ghost {
+      appearance: none;
+      background: transparent;
+      color: var(--ink-2);
+      border: 1px solid var(--line-2);
+      border-radius: var(--r-sm);
+      padding: 8px 12px;
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 120ms ease, border-color 120ms ease;
+    }
+    button.ghost:hover { background: var(--paper-2); border-color: var(--ink-2); color: var(--ink); }
+    button.ghost:disabled { opacity: 0.5; cursor: default; }
+
+    .range-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px 18px;
+    }
+    @media (max-width: 720px) {
+      .range-grid { grid-template-columns: 1fr; }
+    }
+    .range-row {
+      display: grid;
+      grid-template-columns: 1fr auto auto;
+      gap: 10px;
+      align-items: center;
+      padding: 10px 0;
+      border-bottom: 1px dashed var(--line);
+    }
+    .range-row:last-child { border-bottom: 0; }
+    .range-row .name { font-size: 14px; color: var(--ink); }
+    .range-row .name .unit { color: var(--muted); font-size: 12px; margin-left: 4px; }
+    .range-row input { width: 76px; padding: 6px 8px; text-align: right; }
+
+    .pickers {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 14px;
+    }
+    @media (max-width: 720px) {
+      .pickers { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    .results { display: flex; flex-direction: column; gap: 2px; }
+    .track {
+      display: grid;
+      grid-template-columns: 28px 60px 1fr auto;
+      gap: 16px;
+      align-items: center;
+      padding: 12px 14px;
+      border-radius: var(--r-md);
+      transition: background 120ms ease;
+    }
+    .track:hover { background: var(--paper-2); }
+    .track .idx {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 12px;
+      color: var(--muted);
+      text-align: right;
+      letter-spacing: 0;
+    }
+    .track .art {
+      width: 60px; height: 60px;
       border-radius: 10px;
-      padding: 12px;
-      text-align: center;
+      background: var(--paper-2);
+      object-fit: cover;
+      border: 1px solid var(--line);
+    }
+    .ph-art {
+      width: 60px; height: 60px;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      background-image: repeating-linear-gradient(
+        45deg,
+        var(--paper-2) 0 4px,
+        var(--paper) 4px 8px
+      );
+    }
+    .track .body { min-width: 0; }
+    .track .name {
+      font-size: 15.5px;
+      font-weight: 500;
+      letter-spacing: -0.012em;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .track .meta {
+      color: var(--muted);
+      font-size: 13.5px;
+      margin-top: 1px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .track .features {
+      margin-top: 4px;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11.5px;
+      color: var(--ink-2);
+      letter-spacing: 0;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 12px;
+    }
+    .track .features span b { font-weight: 500; color: var(--ink); }
+    .track .features span.sep { color: var(--line-2); }
+    .track .open {
+      color: var(--muted);
+      font-size: 13px;
+      text-decoration: none;
+      padding: 6px 10px;
+      border-radius: 8px;
+      border: 1px solid transparent;
+      transition: color 120ms, border-color 120ms;
+      white-space: nowrap;
+    }
+    .track .open:hover { color: var(--ink); border-color: var(--line-2); }
+
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+    .chip {
+      display: inline-flex;
+      align-items: baseline;
+      gap: 8px;
+      padding: 7px 12px;
+      background: var(--paper-2);
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      font-size: 13px;
+      color: var(--ink);
+    }
+    .chip .n { color: var(--muted); font-family: "JetBrains Mono", monospace; font-size: 11.5px; }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0;
+      border-top: 1px solid var(--line);
+      border-bottom: 1px solid var(--line);
+    }
+    @media (max-width: 720px) {
+      .stats { grid-template-columns: repeat(2, 1fr); }
+    }
+    .stat {
+      padding: 18px 18px 18px 0;
+      border-right: 1px solid var(--line);
+    }
+    .stat:last-child { border-right: 0; }
+    .stat .v {
+      font-family: "Geist", inherit;
+      font-size: 32px;
+      font-weight: 600;
+      letter-spacing: -0.025em;
+      color: var(--ink);
+    }
+    .stat .v .sub { font-family: "JetBrains Mono", monospace; font-size: 13px; font-weight: 400; color: var(--muted); margin-left: 4px; }
+    .stat .k {
+      font-size: 12px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-top: 6px;
+    }
+
+    .artist-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 18px;
+    }
+    .artist {
       display: flex;
       flex-direction: column;
-      align-items: center;
-      gap: 6px;
+      align-items: flex-start;
+      gap: 10px;
+      text-decoration: none;
+      color: inherit;
     }
-    .artist img { width: 88px; height: 88px; }
-    .artist .name { font-size: 13px; }
-    .artist .meta { font-size: 11px; }
+    .artist .a-img {
+      width: 100%;
+      aspect-ratio: 1;
+      border-radius: 999px;
+      object-fit: cover;
+      background: var(--paper-2);
+      border: 1px solid var(--line);
+      transition: transform 200ms ease;
+    }
+    .artist:hover .a-img { transform: scale(1.02); }
+    .artist .a-name { font-size: 14px; font-weight: 500; letter-spacing: -0.01em; }
+    .artist .a-rank { font-family: "JetBrains Mono", monospace; font-size: 11px; color: var(--muted); }
+
+    .empty, .info, .error {
+      padding: 16px 4px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+    .error { color: var(--accent); }
+    .info code {
+      background: var(--paper-2);
+      padding: 1px 6px;
+      border-radius: 4px;
+      font-size: 12.5px;
+    }
+
+    .gate {
+      padding: 48px 32px;
+      border: 1px solid var(--line);
+      border-radius: var(--r-lg);
+      background: var(--paper-2);
+      text-align: left;
+      max-width: 560px;
+    }
+    .gate .gate-title {
+      font-family: "Geist", inherit;
+      font-size: 28px;
+      font-weight: 600;
+      letter-spacing: -0.025em;
+      margin: 0 0 8px;
+    }
+    .gate .gate-title em { font-family: "Instrument Serif", serif; font-style: italic; font-weight: 400; color: var(--accent); }
+    .gate .gate-sub { color: var(--muted); margin: 0 0 22px; }
+
+    .me {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 14px 0 22px;
+      border-bottom: 1px solid var(--line);
+      margin-bottom: 28px;
+    }
+    .me .avatar {
+      width: 52px; height: 52px;
+      border-radius: 999px;
+      object-fit: cover;
+      background: var(--paper-2);
+      border: 1px solid var(--line);
+    }
+    .me .name { font-weight: 600; font-size: 16px; letter-spacing: -0.01em; }
+    .me .sub { color: var(--muted); font-size: 13px; }
+
+    .pill-group {
+      display: inline-flex;
+      gap: 4px;
+      padding: 4px;
+      background: var(--paper-2);
+      border: 1px solid var(--line);
+      border-radius: 999px;
+    }
+    .pill {
+      appearance: none;
+      border: 0;
+      background: transparent;
+      color: var(--ink-2);
+      font-family: inherit;
+      font-size: 12.5px;
+      font-weight: 500;
+      padding: 6px 12px;
+      border-radius: 999px;
+      cursor: pointer;
+    }
+    .pill.active { background: var(--paper); color: var(--ink); box-shadow: var(--shadow); }
+
+    .subtabs {
+      display: flex;
+      gap: 24px;
+      border-bottom: 1px solid var(--line);
+      margin: 8px 0 24px;
+    }
+    .subtab {
+      appearance: none;
+      background: transparent;
+      border: 0;
+      color: var(--muted);
+      padding: 10px 0;
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+    }
+    .subtab.active { color: var(--ink); border-bottom-color: var(--ink); }
+    .subtab:hover { color: var(--ink); }
+
+    .pl-row {
+      display: grid;
+      grid-template-columns: 44px minmax(0, 1fr) auto;
+      gap: 14px;
+      align-items: center;
+      padding: 12px 14px;
+      border: 1px solid var(--line);
+      border-radius: var(--r-md);
+      margin-bottom: 8px;
+      background: var(--paper);
+    }
+    .pl-row .pl-art {
+      width: 44px; height: 44px;
+      border-radius: 8px;
+      object-fit: cover;
+      background: var(--paper-2);
+      border: 1px solid var(--line);
+    }
+    .pl-row .pl-art-ph {
+      width: 44px; height: 44px;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      background-image: repeating-linear-gradient(
+        45deg,
+        var(--paper-2) 0 4px,
+        var(--paper) 4px 8px
+      );
+    }
+    .pl-row .body { min-width: 0; }
+    .pl-row .name {
+      font-size: 14px;
+      font-weight: 500;
+      letter-spacing: -0.01em;
+      color: var(--ink);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .pl-row .meta {
+      color: var(--muted);
+      font-size: 12.5px;
+      margin-top: 1px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .pl-row .pl-meta-line {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11.5px;
+      color: var(--ink-2);
+      margin-top: 3px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .pl-vibe {
+      margin: -8px 0 10px;
+      padding: 10px 14px;
+      border: 1px dashed var(--line-2);
+      border-top: 0;
+      border-radius: 0 0 var(--r-md) var(--r-md);
+      background: var(--paper-2);
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+    .pl-vibe input[type="text"] {
+      flex: 1;
+      padding: 8px 11px;
+      font-size: 13.5px;
+    }
+    .pl-vibe button.primary { height: 36px; padding: 0 14px; font-size: 13px; }
+    .pl-vibe .hint {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .pl-recs {
+      margin: 0 0 14px;
+      padding: 14px 16px 6px;
+      border: 1px dashed var(--line-2);
+      border-top: 0;
+      border-radius: 0 0 var(--r-md) var(--r-md);
+      background: var(--paper-2);
+      transform: translateY(-8px);
+    }
+    .pl-recs .recs-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 6px;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11.5px;
+      color: var(--muted);
+    }
+
+    .row-actions { display: flex; flex-direction: column; gap: 6px; align-items: stretch; }
+
+    .skel {
+      background: linear-gradient(90deg, var(--paper-2) 0%, var(--line) 50%, var(--paper-2) 100%);
+      background-size: 200% 100%;
+      animation: shimmer 1.4s linear infinite;
+      border-radius: 6px;
+    }
+    @keyframes shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+
+    .demo-banner {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11.5px;
+      padding: 6px 12px;
+      background: var(--accent-soft);
+      color: var(--accent-ink);
+      border-radius: 999px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .demo-dot { width: 6px; height: 6px; border-radius: 999px; background: var(--accent); }
+
+    .foot {
+      margin-top: 48px;
+      padding-top: 18px;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 12.5px;
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .foot a { color: var(--ink-2); text-decoration: none; }
+    .foot a:hover { color: var(--ink); }
   </style>
 </head>
 <body>
   <div id="root"></div>
 
-  <script type="text/babel" data-type="module">
+  <script type="text/babel" data-presets="react">
     const { useState, useEffect } = React;
 
-    const KEY_NAMES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
-    function keyLabel(k, mode) {
-      if (k === null || k === undefined) return "";
+    const KEY_NAMES = ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
+    const keyLabel = (k, mode) => {
+      if (k == null) return "";
       const name = KEY_NAMES[k] || "?";
-      if (mode === 0) return name + "m";
-      if (mode === 1) return name;
-      return name;
-    }
+      return mode === 0 ? name + "m" : name;
+    };
 
-    function getInitialAuthError() {
-      const sp = new URLSearchParams(window.location.search);
-      return sp.get("auth_error") || null;
+    const DEMO_TRACKS = [
+      { name: "Ekstasis", artists: ["Julianna Barwick"], album: "Nepenthe", popularity: 41, image: null, url: "#" },
+      { name: "Avril 14th", artists: ["Aphex Twin"], album: "Drukqs", popularity: 68, image: null, url: "#" },
+      { name: "Cirrus", artists: ["Bonobo"], album: "The North Borders", popularity: 64, image: null, url: "#" },
+      { name: "Open Eye Signal", artists: ["Jon Hopkins"], album: "Immunity", popularity: 59, image: null, url: "#" },
+      { name: "An Ending (Ascent)", artists: ["Brian Eno"], album: "Apollo", popularity: 70, image: null, url: "#" },
+      { name: "Saada Bonaire", artists: ["Saada Bonaire"], album: "1992", popularity: 33, image: null, url: "#" },
+    ];
+    const DEMO_FEAT = [
+      { tempo: 92.4, key: 9,  mode: 1, energy: 0.42, danceability: 0.51, valence: 0.34, acousticness: 0.78 },
+      { tempo: 138.0, key: 5, mode: 0, energy: 0.18, danceability: 0.21, valence: 0.16, acousticness: 0.99 },
+      { tempo: 110.5, key: 2, mode: 0, energy: 0.62, danceability: 0.59, valence: 0.41, acousticness: 0.07 },
+      { tempo: 124.0, key: 7, mode: 1, energy: 0.81, danceability: 0.74, valence: 0.55, acousticness: 0.04 },
+      { tempo: 76.2,  key: 4, mode: 1, energy: 0.22, danceability: 0.28, valence: 0.62, acousticness: 0.92 },
+      { tempo: 118.0, key: 0, mode: 1, energy: 0.55, danceability: 0.66, valence: 0.71, acousticness: 0.31 },
+    ];
+    const DEMO_ARTISTS = [
+      "Caribou","Fleet Foxes","Beach House","Floating Points","Khruangbin","Tame Impala","Mac DeMarco","Steve Reich"
+    ].map((name, i) => ({ name, image: null, url: "#", rank: i+1 }));
+    const DEMO_GENRES = [
+      ["ambient", 38], ["dream pop", 24], ["modern jazz", 19], ["indietronica", 17],
+      ["chillwave", 12], ["downtempo", 11], ["minimalism", 9], ["psych folk", 7],
+    ];
+    const DEMO_ANALYZE = {
+      stats: { avg_tempo: 108.4, avg_energy: 0.46, avg_danceability: 0.58, feature_total: 20, feature_coverage: 18 },
+      top_artists: DEMO_ARTISTS,
+      top_tracks: DEMO_TRACKS.map((t, i) => ({ ...t })),
+      top_genres: DEMO_GENRES,
+      recent: DEMO_TRACKS.slice().reverse(),
+    };
+    const DEMO_PLAYLISTS = [
+      { id: "p1", name: "Sunday morning, slow", owner: "you", image: null, url: "#" },
+      { id: "p2", name: "long drives / late may", owner: "you", image: null, url: "#" },
+      { id: "p3", name: "writing - no vocals", owner: "you", image: null, url: "#" },
+    ];
+
+    async function safeFetch(url, opts) {
+      try {
+        const r = await fetch(url, opts);
+        if (!r.ok) {
+          const j = await r.json().catch(() => ({}));
+          const err = new Error(j.error || `HTTP ${r.status}`);
+          err.status = r.status; err.body = j;
+          throw err;
+        }
+        return await r.json();
+      } catch (e) {
+        if (e.status) throw e;
+        e.demo = true;
+        throw e;
+      }
     }
 
     function App() {
+      const params = new URLSearchParams(window.location.search);
+      const initial = params.get("tab") === "stats" ? "stats" : "mine";
+      const [tab, setTab] = useState(initial);
+      const [theme, setTheme] = useState(() =>
+        document.documentElement.getAttribute("data-theme") || "light"
+      );
+
+      useEffect(() => {
+        document.documentElement.setAttribute("data-theme", theme);
+        try { localStorage.setItem("tonecard-theme", theme); } catch (e) {}
+      }, [theme]);
+
+      const toggleTheme = () => setTheme(t => (t === "dark" ? "light" : "dark"));
+
       return (
-        <div className="container">
-          <h1>Spotify · My Music</h1>
-          <MineTab />
+        <div className="shell">
+          <header className="topbar">
+            <div className="brand">
+              <div className="brand-mark" aria-hidden="true"></div>
+              <div>Tonecard <small>- vibe search & listening stats</small></div>
+            </div>
+            <div className="spacer"></div>
+            <button
+              className="theme-toggle"
+              onClick={toggleTheme}
+              aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+              title={theme === "dark" ? "Light mode" : "Dark mode"}
+            >
+              {theme === "dark"
+                ? (
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <circle cx="12" cy="12" r="4" />
+                    <path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" />
+                  </svg>
+                )
+                : (
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+                  </svg>
+                )}
+            </button>
+            <nav className="tabs" role="tablist">
+              <button role="tab" aria-selected={tab==="mine"} className={`tab ${tab==="mine"?"active":""}`} onClick={() => setTab("mine")}>My Music</button>
+              <button role="tab" aria-selected={tab==="stats"} className={`tab ${tab==="stats"?"active":""}`} onClick={() => setTab("stats")}>Stats</button>
+            </nav>
+          </header>
+
+          {tab === "mine" && <MineTab />}
+          {tab === "stats" && <StatsTab />}
+
+          <footer className="foot">
+            <div>Audio features via ReccoBeats. Catalog & playback by Spotify Web API.</div>
+            <div>Tonecard - local Flask - :5050</div>
+          </footer>
         </div>
       );
     }
 
-    function SearchTab() {
-      const [query, setQuery] = useState("rainy day jazz");
-      const [vibe, setVibe] = useState("cozy fireplace cafe");
-      const [limit, setLimit] = useState(10);
-      const [results, setResults] = useState([]);
-      const [loading, setLoading] = useState(false);
-      const [error, setError] = useState(null);
-      const [searched, setSearched] = useState(false);
-
-      async function onSubmit(e) {
-        e.preventDefault();
-        setLoading(true);
-        setError(null);
-        try {
-          const params = new URLSearchParams({ q: query, vibe, limit: String(limit) });
-          const res = await fetch(`/api/search?${params}`);
-          const data = await res.json();
-          if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
-          setResults(data.results || []);
-          setSearched(true);
-        } catch (err) {
-          setError(err.message);
-          setResults([]);
-        } finally {
-          setLoading(false);
-        }
-      }
-
-      return (
-        <div>
-          <form onSubmit={onSubmit}>
-            <div>
-              <label htmlFor="q">Query</label>
-              <input id="q" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="rainy day jazz" />
-            </div>
-            <div>
-              <label htmlFor="vibe">Vibe keywords (space-separated)</label>
-              <input id="vibe" value={vibe} onChange={(e) => setVibe(e.target.value)} placeholder="cozy fireplace cafe" />
-            </div>
-            <div className="row">
-              <div>
-                <label htmlFor="limit">Limit (max 10)</label>
-                <input id="limit" type="number" min="1" max="10" value={limit} onChange={(e) => setLimit(Number(e.target.value))} />
-              </div>
-              <div style={{ display: "flex", alignItems: "flex-end" }}>
-                <button type="submit" disabled={loading || !query.trim()}>
-                  {loading ? "Searching…" : "Search"}
-                </button>
-              </div>
-            </div>
-          </form>
-
-          {error && <div className="error">Error: {error}</div>}
-          {!error && searched && results.length === 0 && <div className="empty">No results.</div>}
-
-          {results.map((t, i) => (
-            <div key={t.url || i} className="track">
-              <div className="idx">{i + 1}</div>
-              {t.image ? <img src={t.image} alt="" /> : <div style={{ width: 56, height: 56, borderRadius: 6, background: "#222" }} />}
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div className="name">{t.name}</div>
-                <div className="meta">{t.artists.join(", ")} · {t.album}</div>
-                {t.url && <a href={t.url} target="_blank" rel="noreferrer">Open in Spotify ↗</a>}
-              </div>
-            </div>
-          ))}
-        </div>
-      );
-    }
-
-    function FilterTab() {
-      const [query, setQuery] = useState("indie rock");
-      const [tempoMin, setTempoMin] = useState(110);
-      const [tempoMax, setTempoMax] = useState(140);
-      const [energyMin, setEnergyMin] = useState(0.5);
-      const [energyMax, setEnergyMax] = useState(1.0);
-      const [danceMin, setDanceMin] = useState(0.0);
-      const [danceMax, setDanceMax] = useState(1.0);
-      const [valenceMin, setValenceMin] = useState(0.0);
-      const [valenceMax, setValenceMax] = useState(1.0);
-      const [acousticMin, setAcousticMin] = useState(0.0);
-      const [acousticMax, setAcousticMax] = useState(1.0);
-      const [keySel, setKeySel] = useState("");
-      const [modeSel, setModeSel] = useState("");
-      const [limit, setLimit] = useState(10);
-
-      const [results, setResults] = useState([]);
-      const [meta, setMeta] = useState(null);
-      const [loading, setLoading] = useState(false);
-      const [error, setError] = useState(null);
-      const [searched, setSearched] = useState(false);
-
-      async function onSubmit(e) {
-        e.preventDefault();
-        setLoading(true);
-        setError(null);
-        try {
-          const params = new URLSearchParams({
-            q: query,
-            tempo_min: String(tempoMin),
-            tempo_max: String(tempoMax),
-            energy_min: String(energyMin),
-            energy_max: String(energyMax),
-            danceability_min: String(danceMin),
-            danceability_max: String(danceMax),
-            valence_min: String(valenceMin),
-            valence_max: String(valenceMax),
-            acousticness_min: String(acousticMin),
-            acousticness_max: String(acousticMax),
-            limit: String(limit),
-          });
-          if (keySel !== "") params.set("key", keySel);
-          if (modeSel !== "") params.set("mode", modeSel);
-
-          const res = await fetch(`/api/filter?${params}`);
-          const data = await res.json();
-          if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
-          setResults(data.results || []);
-          setMeta({ candidate_count: data.candidate_count, feature_coverage: data.feature_coverage });
-          setSearched(true);
-        } catch (err) {
-          setError(err.message);
-          setResults([]);
-          setMeta(null);
-        } finally {
-          setLoading(false);
-        }
-      }
-
-      const rangeStyle = { display: "grid", gridTemplateColumns: "120px 1fr 1fr", gap: 8, alignItems: "center", marginBottom: 8 };
-
-      return (
-        <div>
-          <form onSubmit={onSubmit}>
-            <div>
-              <label htmlFor="fq">Query (genre, mood, artist…)</label>
-              <input id="fq" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="indie rock" />
-            </div>
-
-            <div style={rangeStyle}>
-              <label>Tempo (BPM)</label>
-              <input type="number" min="40" max="220" step="1" value={tempoMin} onChange={(e) => setTempoMin(Number(e.target.value))} />
-              <input type="number" min="40" max="220" step="1" value={tempoMax} onChange={(e) => setTempoMax(Number(e.target.value))} />
-            </div>
-            <div style={rangeStyle}>
-              <label>Energy (0–1)</label>
-              <input type="number" min="0" max="1" step="0.05" value={energyMin} onChange={(e) => setEnergyMin(Number(e.target.value))} />
-              <input type="number" min="0" max="1" step="0.05" value={energyMax} onChange={(e) => setEnergyMax(Number(e.target.value))} />
-            </div>
-            <div style={rangeStyle}>
-              <label>Danceability (0–1)</label>
-              <input type="number" min="0" max="1" step="0.05" value={danceMin} onChange={(e) => setDanceMin(Number(e.target.value))} />
-              <input type="number" min="0" max="1" step="0.05" value={danceMax} onChange={(e) => setDanceMax(Number(e.target.value))} />
-            </div>
-            <div style={rangeStyle}>
-              <label>Valence (0–1)</label>
-              <input type="number" min="0" max="1" step="0.05" value={valenceMin} onChange={(e) => setValenceMin(Number(e.target.value))} />
-              <input type="number" min="0" max="1" step="0.05" value={valenceMax} onChange={(e) => setValenceMax(Number(e.target.value))} />
-            </div>
-            <div style={rangeStyle}>
-              <label>Acousticness (0–1)</label>
-              <input type="number" min="0" max="1" step="0.05" value={acousticMin} onChange={(e) => setAcousticMin(Number(e.target.value))} />
-              <input type="number" min="0" max="1" step="0.05" value={acousticMax} onChange={(e) => setAcousticMax(Number(e.target.value))} />
-            </div>
-
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 100px 120px", gap: 10 }}>
-              <div>
-                <label htmlFor="key">Key</label>
-                <select id="key" value={keySel} onChange={(e) => setKeySel(e.target.value)}>
-                  <option value="">Any</option>
-                  {KEY_NAMES.map((n, i) => (
-                    <option key={i} value={i}>{n}</option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label htmlFor="mode">Mode</label>
-                <select id="mode" value={modeSel} onChange={(e) => setModeSel(e.target.value)}>
-                  <option value="">Any</option>
-                  <option value="1">Major</option>
-                  <option value="0">Minor</option>
-                </select>
-              </div>
-              <div>
-                <label htmlFor="flimit">Limit</label>
-                <input id="flimit" type="number" min="1" max="20" value={limit} onChange={(e) => setLimit(Number(e.target.value))} />
-              </div>
-              <div style={{ display: "flex", alignItems: "flex-end" }}>
-                <button type="submit" disabled={loading || !query.trim()}>
-                  {loading ? "Filtering…" : "Filter"}
-                </button>
-              </div>
-            </div>
-          </form>
-
-          <div className="info" style={{ fontSize: 12 }}>
-            Audio features via <a href="https://reccobeats.com" target="_blank" rel="noreferrer" style={{ color: "var(--accent)" }}>ReccoBeats</a>. Spotify deprecated their own audio-features endpoint for new apps.
-          </div>
-
-          {error && <div className="error">Error: {error}</div>}
-          {!error && searched && results.length === 0 && (
-            <div className="empty">
-              No matches.{meta && ` Searched ${meta.candidate_count} candidates, ${meta.feature_coverage} had features.`}
-            </div>
-          )}
-          {!error && searched && results.length > 0 && meta && (
-            <div className="info" style={{ fontSize: 12 }}>
-              {results.length} of {meta.feature_coverage} feature-known tracks ({meta.candidate_count} total candidates).
-            </div>
-          )}
-
-          {results.map((t, i) => {
-            const f = t.features || {};
-            return (
-              <div key={t.url || i} className="track">
-                <div className="idx">{i + 1}</div>
-                {t.image ? <img src={t.image} alt="" /> : <div style={{ width: 56, height: 56, borderRadius: 6, background: "#222" }} />}
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div className="name">{t.name}</div>
-                  <div className="meta">{t.artists.join(", ")} · {t.album}</div>
-                  <div className="meta" style={{ fontFamily: "ui-monospace, monospace", fontSize: 12 }}>
-                    {f.tempo ? `${f.tempo} BPM` : ""}
-                    {f.key !== null && f.key !== undefined ? ` · ${keyLabel(f.key, f.mode)}` : ""}
-                    {f.energy !== null && f.energy !== undefined ? ` · energy ${f.energy}` : ""}
-                    {f.danceability !== null && f.danceability !== undefined ? ` · dance ${f.danceability}` : ""}
-                    {f.valence !== null && f.valence !== undefined ? ` · valence ${f.valence}` : ""}
-                  </div>
-                  {t.url && <a href={t.url} target="_blank" rel="noreferrer">Open in Spotify ↗</a>}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      );
-    }
-
-    function MineTab() {
+    function StatsTab() {
       const [me, setMe] = useState(null);
       const [meLoading, setMeLoading] = useState(true);
       const [data, setData] = useState(null);
       const [loading, setLoading] = useState(false);
       const [error, setError] = useState(null);
       const [timeRange, setTimeRange] = useState("medium_term");
-      const [authError] = useState(getInitialAuthError());
-      const [playlists, setPlaylists] = useState([]);
-      const [playlistsLoading, setPlaylistsLoading] = useState(false);
-      const [playlistStats, setPlaylistStats] = useState({});
-      const [playlistLoadingId, setPlaylistLoadingId] = useState(null);
-      const [playlistRecs, setPlaylistRecs] = useState({});
-      const [playlistRecsLoadingId, setPlaylistRecsLoadingId] = useState(null);
-      const [tab, setTab] = useState("library");
-
-      async function loadPlaylists() {
-        setPlaylistsLoading(true);
-        try {
-          const res = await fetch("/api/playlists");
-          const j = await res.json();
-          if (res.ok) setPlaylists(j.playlists || []);
-        } catch {
-          /* ignore */
-        } finally {
-          setPlaylistsLoading(false);
-        }
-      }
-
-      async function analyzePlaylist(id) {
-        setPlaylistLoadingId(id);
-        try {
-          const res = await fetch(`/api/playlists/${id}/stats`);
-          const j = await res.json();
-          if (res.ok) setPlaylistStats((prev) => ({ ...prev, [id]: j }));
-        } catch {
-          /* ignore */
-        } finally {
-          setPlaylistLoadingId(null);
-        }
-      }
-
-      async function findSimilar(id) {
-        setPlaylistRecsLoadingId(id);
-        try {
-          const res = await fetch(`/api/playlists/${id}/recommendations?count=10`);
-          const j = await res.json();
-          if (res.ok) setPlaylistRecs((prev) => ({ ...prev, [id]: j }));
-        } catch {
-          /* ignore */
-        } finally {
-          setPlaylistRecsLoadingId(null);
-        }
-      }
+      const [demoMode, setDemoMode] = useState(false);
+      const [authError] = useState(() => new URLSearchParams(window.location.search).get("auth_error"));
 
       async function loadMe() {
         setMeLoading(true);
         try {
-          const res = await fetch("/api/me");
-          const j = await res.json();
+          const j = await safeFetch("/api/me");
           setMe(j);
-        } catch {
-          setMe({ authenticated: false });
-        } finally {
-          setMeLoading(false);
-        }
+        } catch (err) {
+          if (err.demo) {
+            setMe({ authenticated: true, display_name: "Riley - demo", country: "US", image: null, url: "#" });
+            setDemoMode(true);
+          } else {
+            setMe({ authenticated: false });
+          }
+        } finally { setMeLoading(false); }
       }
 
       async function loadAnalyze(range) {
-        setLoading(true);
-        setError(null);
+        setLoading(true); setError(null);
         try {
-          const res = await fetch(`/api/analyze?time_range=${range}`);
-          const j = await res.json();
-          if (!res.ok) {
-            if (res.status === 401) {
-              setMe({ authenticated: false });
-              setData(null);
-              return;
-            }
-            throw new Error(j.error || `HTTP ${res.status}`);
-          }
+          const j = await safeFetch(`/api/analyze?time_range=${range}`);
           setData(j);
         } catch (err) {
-          setError(err.message);
-        } finally {
-          setLoading(false);
-        }
+          if (err.demo) { setData(DEMO_ANALYZE); setDemoMode(true); }
+          else if (err.status === 401) { setMe({ authenticated: false }); setData(null); }
+          else setError(err.message);
+        } finally { setLoading(false); }
       }
 
       useEffect(() => { loadMe(); }, []);
-      useEffect(() => {
-        if (me && me.authenticated) loadAnalyze(timeRange);
-      }, [me && me.authenticated, timeRange]);
-      useEffect(() => {
-        if (me && me.authenticated) loadPlaylists();
-      }, [me && me.authenticated]);
+      useEffect(() => { if (me && me.authenticated) loadAnalyze(timeRange); }, [me && me.authenticated, timeRange]);
 
       async function logout() {
-        await fetch("/logout", { method: "POST" });
+        try { await fetch("/logout", { method: "POST" }); } catch {}
         setMe({ authenticated: false });
         setData(null);
-        setPlaylists([]);
-        setPlaylistStats({});
-        setPlaylistRecs({});
       }
 
-      if (meLoading) return <div className="info">Loading…</div>;
+      if (meLoading) return (
+        <section>
+          <div className="hero">
+            <div className="eyebrow">Stats</div>
+            <h1 className="display">Loading your <em>rankings</em>...</h1>
+          </div>
+          <SkeletonList n={4} />
+        </section>
+      );
 
       if (!me || !me.authenticated) {
         return (
-          <div className="panel">
-            <div style={{ marginBottom: 12 }}>Connect your Spotify account to analyze your top tracks, top artists, top genres, and recent listens.</div>
-            {authError && <div className="error" style={{ marginBottom: 8 }}>Auth error: {authError}</div>}
-            <a href="/login"><button>Connect Spotify</button></a>
-            <div className="info" style={{ marginTop: 10, fontSize: 12 }}>
-              Note: add <code>http://127.0.0.1:5050/callback</code> as a Redirect URI in your Spotify app settings.
+          <section>
+            <div className="hero">
+              <div className="eyebrow">Stats - OAuth</div>
+              <h1 className="display">Connect to see your <em>artist + song rankings</em>.</h1>
+              <p className="lede">View top artists and top songs by time range, plus listening-shape summary stats.</p>
             </div>
-          </div>
+
+            <div className="gate">
+              <div className="gate-title">Connect <em>Spotify</em></div>
+              <div className="gate-sub">Read-only scopes: top read - recently-played - library read - profile.</div>
+              {authError && <div className="error" style={{padding: "8px 0"}}>Auth error: {authError}</div>}
+              <a href="/login" className="primary">Connect Spotify -&gt;</a>
+            </div>
+          </section>
         );
       }
 
@@ -525,205 +893,476 @@
       };
 
       return (
-        <div>
-          <div className="panel me-card">
-            {me.image ? <img src={me.image} alt="" /> : <div style={{ width: 48, height: 48, borderRadius: "50%", background: "#222" }} />}
+        <section>
+          <div className="me">
+            {me.image
+              ? <img src={me.image} alt="" className="avatar" />
+              : <div className="avatar" />}
             <div>
               <div className="name">{me.display_name}</div>
-              <div className="sub">{me.country || ""}</div>
+              <div className="sub">{me.country || ""}{demoMode ? " - demo data" : ""}</div>
             </div>
             <div className="spacer" />
-            <button className="secondary" onClick={logout}>Disconnect</button>
+            <button className="ghost" onClick={logout}>Disconnect</button>
           </div>
+          <StatsView
+            data={data}
+            loading={loading}
+            error={error}
+            timeRange={timeRange}
+            setTimeRange={setTimeRange}
+            rangeLabel={rangeLabel}
+          />
+        </section>
+      );
+    }
 
-          <div className="tabs">
-            <button className={`tab ${tab === "library" ? "active" : ""}`} onClick={() => setTab("library")}>Library</button>
-            <button className={`tab ${tab === "stats" ? "active" : ""}`} onClick={() => setTab("stats")}>Stats</button>
+    function MineTab() {
+      const [me, setMe] = useState(null);
+      const [meLoading, setMeLoading] = useState(true);
+      const [recentData, setRecentData] = useState(null);
+      const [demoMode, setDemoMode] = useState(false);
+      const [authError] = useState(() => new URLSearchParams(window.location.search).get("auth_error"));
+      const [playlists, setPlaylists] = useState([]);
+      const [playlistStats, setPlaylistStats] = useState({});
+      const [playlistLoadingId, setPlaylistLoadingId] = useState(null);
+      const [playlistRecs, setPlaylistRecs] = useState({});
+      const [playlistRecsLoadingId, setPlaylistRecsLoadingId] = useState(null);
+      const [vibeInputs, setVibeInputs] = useState({});
+      const [vibeRecs, setVibeRecs] = useState({});
+      const [vibeLoadingId, setVibeLoadingId] = useState(null);
+      const [vibeErrors, setVibeErrors] = useState({});
+
+      async function loadMe() {
+        setMeLoading(true);
+        try {
+          const j = await safeFetch("/api/me");
+          setMe(j);
+        } catch (err) {
+          if (err.demo) {
+            setMe({ authenticated: true, display_name: "Riley - demo", country: "US", image: null, url: "#" });
+            setDemoMode(true);
+          } else {
+            setMe({ authenticated: false });
+          }
+        } finally { setMeLoading(false); }
+      }
+
+      async function loadRecent() {
+        try {
+          const j = await safeFetch("/api/analyze?time_range=medium_term");
+          setRecentData(j);
+        } catch (err) {
+          if (err.demo) { setRecentData(DEMO_ANALYZE); setDemoMode(true); }
+          else if (err.status === 401) { setMe({ authenticated: false }); setRecentData(null); }
+        }
+      }
+
+      async function loadPlaylists() {
+        try {
+          const j = await safeFetch("/api/playlists");
+          setPlaylists(j.playlists || []);
+        } catch (err) {
+          if (err.demo) setPlaylists(DEMO_PLAYLISTS);
+        }
+      }
+
+      async function analyzePlaylist(id) {
+        setPlaylistLoadingId(id);
+        try {
+          const j = await safeFetch(`/api/playlists/${id}/stats`);
+          setPlaylistStats(s => ({ ...s, [id]: j }));
+        } catch (err) {
+          if (err.demo) {
+            setPlaylistStats(s => ({ ...s, [id]: {
+              track_count: 42, max_tracks: 100, feature_coverage: 38,
+              stats: { avg_tempo: 102.1, avg_energy: 0.41, avg_danceability: 0.55 }
+            }}));
+          }
+        } finally { setPlaylistLoadingId(null); }
+      }
+
+      async function findSimilar(id) {
+        setPlaylistRecsLoadingId(id);
+        try {
+          const j = await safeFetch(`/api/playlists/${id}/recommendations?count=10`);
+          setPlaylistRecs(r => ({ ...r, [id]: j }));
+        } catch (err) {
+          if (err.demo) {
+            setPlaylistRecs(r => ({ ...r, [id]: {
+              playlist_stats: { avg_tempo: 102.1, avg_energy: 0.41, avg_danceability: 0.55 },
+              recommendations: DEMO_TRACKS.slice(0,5).map((t, i) => ({ ...t, id: "r"+i, features: DEMO_FEAT[i] })),
+            }}));
+          }
+        } finally { setPlaylistRecsLoadingId(null); }
+      }
+
+      function toggleVibe(id) {
+        setVibeInputs(v => {
+          if (id in v) { const { [id]: _, ...rest } = v; return rest; }
+          return { ...v, [id]: "" };
+        });
+      }
+
+      function setVibeText(id, value) {
+        setVibeInputs(v => ({ ...v, [id]: value }));
+      }
+
+      async function searchByVibe(id) {
+        const vibe = (vibeInputs[id] || "").trim();
+        if (!vibe) return;
+        setVibeLoadingId(id);
+        setVibeErrors(e => { const { [id]: _, ...rest } = e; return rest; });
+        try {
+          const j = await safeFetch(`/api/playlists/${id}/vibe?vibe=${encodeURIComponent(vibe)}&count=10`);
+          setVibeRecs(r => ({ ...r, [id]: j }));
+        } catch (err) {
+          if (err.demo) {
+            setVibeRecs(r => ({ ...r, [id]: {
+              vibe,
+              playlist_stats: { avg_tempo: 102.1, avg_energy: 0.41, avg_danceability: 0.55 },
+              recommendations: DEMO_TRACKS.slice(0,5).map((t, i) => ({ ...t, id: "v"+i, features: DEMO_FEAT[i] })),
+            }}));
+          } else if (err.status === 401) {
+            setVibeErrors(e => ({ ...e, [id]: "Session expired. Reconnect Spotify and try again." }));
+          } else {
+            setVibeErrors(e => ({ ...e, [id]: err.message || "Search failed." }));
+          }
+        } finally { setVibeLoadingId(null); }
+      }
+
+      useEffect(() => { loadMe(); }, []);
+      useEffect(() => { if (me && me.authenticated) loadPlaylists(); }, [me && me.authenticated]);
+      useEffect(() => { if (me && me.authenticated) loadRecent(); }, [me && me.authenticated]);
+
+      async function logout() {
+        try { await fetch("/logout", { method: "POST" }); } catch {}
+        setMe({ authenticated: false }); setRecentData(null); setPlaylists([]);
+        setPlaylistStats({}); setPlaylistRecs({});
+        setVibeInputs({}); setVibeRecs({});
+      }
+
+      if (meLoading) return (
+        <section>
+          <div className="hero">
+            <div className="eyebrow">My Music</div>
+            <h1 className="display">Loading your <em>listening shape</em>...</h1>
           </div>
+          <SkeletonList n={4} />
+        </section>
+      );
 
-          {error && <div className="error">Error: {error}</div>}
-          {loading && tab === "stats" && <div className="info">Analyzing your music…</div>}
+      if (!me || !me.authenticated) {
+        return (
+          <section>
+            <div className="hero">
+              <div className="eyebrow">My Music - OAuth</div>
+              <h1 className="display">Connect to see your <em>listening shape</em>.</h1>
+              <p className="lede">Top tracks, top artists, genre distribution, recent plays - and per-playlist BPM/energy/dance averages.</p>
+            </div>
 
-          {tab === "stats" && data && !loading && (
+            <div className="gate">
+              <div className="gate-title">Connect <em>Spotify</em></div>
+              <div className="gate-sub">Read-only scopes: top read - recently-played - library read - profile.</div>
+              {authError && <div className="error" style={{padding: "8px 0"}}>Auth error: {authError}</div>}
+              <a href="/login" className="primary">Connect Spotify -&gt;</a>
+              <div className="info" style={{marginTop: 18, padding: 0}}>
+                In your Spotify dev dashboard, add <code>http://127.0.0.1:5050/callback</code> as a redirect URI.
+              </div>
+            </div>
+          </section>
+        );
+      }
+
+      return (
+        <section>
+          <div className="me">
+            {me.image
+              ? <img src={me.image} alt="" className="avatar" />
+              : <div className="avatar" />}
             <div>
-              <div className="panel">
-                <label htmlFor="range">Time range</label>
-                <select id="range" value={timeRange} onChange={(e) => setTimeRange(e.target.value)}>
-                  <option value="short_term">Last 4 weeks</option>
-                  <option value="medium_term">Last 6 months</option>
-                  <option value="long_term">All time</option>
-                </select>
-              </div>
+              <div className="name">{me.display_name}</div>
+              <div className="sub">{me.country || ""}{demoMode ? " - demo data" : ""}</div>
+            </div>
+            <div className="spacer" />
+            <button className="ghost" onClick={logout}>Disconnect</button>
+          </div>
+          <LibraryView
+            playlists={playlists}
+            playlistStats={playlistStats}
+            playlistLoadingId={playlistLoadingId}
+            playlistRecs={playlistRecs}
+            playlistRecsLoadingId={playlistRecsLoadingId}
+            analyzePlaylist={analyzePlaylist}
+            findSimilar={findSimilar}
+            vibeInputs={vibeInputs}
+            vibeRecs={vibeRecs}
+            vibeLoadingId={vibeLoadingId}
+            vibeErrors={vibeErrors}
+            toggleVibe={toggleVibe}
+            setVibeText={setVibeText}
+            searchByVibe={searchByVibe}
+            data={recentData}
+          />
+        </section>
+      );
+    }
 
+    function StatsView({ data, loading, error, timeRange, setTimeRange, rangeLabel }) {
+      return (
+        <div>
+          <div style={{display: "flex", alignItems: "center", gap: 12, marginBottom: 22}}>
+            <div className="eyebrow" style={{margin: 0}}>Time range</div>
+            <div className="pill-group">
+              {[["short_term","4w"],["medium_term","6m"],["long_term","all"]].map(([v,l]) => (
+                <button key={v} className={`pill ${timeRange===v?"active":""}`} onClick={()=>setTimeRange(v)}>{l}</button>
+              ))}
+            </div>
+            <div className="spacer" />
+            <div className="info mono" style={{padding: 0, fontSize: 11.5}}>{rangeLabel[timeRange]}</div>
+          </div>
+
+          {error && <div className="error">{error}</div>}
+          {loading && <SkeletonList n={4} />}
+
+          {!loading && data && (
+            <>
               <div className="stats">
-                <div className="stat">
-                  <div className="v">{data.stats.avg_tempo ?? "—"}</div>
-                  <div className="k">Avg tempo (BPM)</div>
-                </div>
-                <div className="stat">
-                  <div className="v">{data.stats.avg_energy ?? "—"}</div>
-                  <div className="k">Avg energy</div>
-                </div>
-                <div className="stat">
-                  <div className="v">{data.stats.avg_danceability ?? "—"}</div>
-                  <div className="k">Avg danceability</div>
-                </div>
+                <Stat v={data.stats.avg_tempo ?? "-"} sub="BPM"  k="Avg tempo" />
+                <Stat v={data.stats.avg_energy ?? "-"}        k="Avg energy" />
+                <Stat v={data.stats.avg_danceability ?? "-"}  k="Avg dance" />
+                <Stat v={`${data.stats.feature_coverage ?? 0}/${data.stats.feature_total ?? 0}`} k="Features known" />
               </div>
-              {data.stats.feature_total > 0 && (
-                <div className="info" style={{ fontSize: 12, padding: "6px 4px 0" }}>
-                  Audio features for {data.stats.feature_coverage}/{data.stats.feature_total} top tracks via ReccoBeats.
-                </div>
+
+              {data.top_genres && data.top_genres.length > 0 && (
+                <>
+                  <h2>Genres <span className="count">- top {data.top_genres.length}</span></h2>
+                  <div className="chips">
+                    {data.top_genres.map(([g, n]) => (
+                      <span className="chip" key={g}>{g}<span className="n">{n}</span></span>
+                    ))}
+                  </div>
+                </>
               )}
 
-              <h2>Top artists · {rangeLabel[timeRange]}</h2>
-              {data.top_artists.length === 0 ? (
-                <div className="empty">No top artists yet.</div>
-              ) : (
-                <div className="grid-artists">
-                  {data.top_artists.map((a, i) => (
-                    <a key={a.url || i} href={a.url} target="_blank" rel="noreferrer" className="artist" style={{ textDecoration: "none", color: "inherit" }}>
-                      {a.image ? <img src={a.image} alt="" /> : <div style={{ width: 88, height: 88, borderRadius: "50%", background: "#222" }} />}
-                      <div className="name">{a.name}</div>
-                    </a>
-                  ))}
-                </div>
-              )}
+              <h2>Top artists</h2>
+              {data.top_artists.length === 0
+                ? <div className="empty">No top artists yet.</div>
+                : (
+                  <div className="artist-grid">
+                    {data.top_artists.slice(0, 12).map((a, i) => (
+                      <a key={(a.url||"")+i} href={a.url || "#"} target="_blank" rel="noreferrer" className="artist">
+                        {a.image
+                          ? <img src={a.image} alt="" className="a-img" />
+                          : <div className="a-img" />}
+                        <div>
+                          <div className="a-rank">#{String(i+1).padStart(2,"0")}</div>
+                          <div className="a-name">{a.name}</div>
+                        </div>
+                      </a>
+                    ))}
+                  </div>
+                )}
 
               <h2>Top tracks</h2>
-              {data.top_tracks.length === 0 ? (
-                <div className="empty">No top tracks yet.</div>
-              ) : (
-                data.top_tracks.map((t, i) => (
-                  <div key={t.url || i} className="track">
-                    <div className="idx">{i + 1}</div>
-                    {t.image ? <img src={t.image} alt="" /> : <div style={{ width: 56, height: 56, borderRadius: 6, background: "#222" }} />}
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div className="name">{t.name}</div>
-                      <div className="meta">{t.artists.join(", ")} · {t.album}</div>
-                      {t.url && <a href={t.url} target="_blank" rel="noreferrer">Open in Spotify ↗</a>}
-                    </div>
+              {data.top_tracks.length === 0
+                ? <div className="empty">No top tracks yet.</div>
+                : (
+                  <div className="results">
+                    {data.top_tracks.map((t, i) => <TrackRow key={(t.url||"")+i} t={t} i={i} />)}
                   </div>
-                ))
-              )}
-            </div>
+                )}
+            </>
           )}
+        </div>
+      );
+    }
 
-          {tab === "library" && (
-            <div>
-              <h2>Your playlists</h2>
-              {playlistsLoading ? (
-                <div className="info">Loading playlists…</div>
-              ) : playlists.length === 0 ? (
-                <div className="empty">No playlists.</div>
-              ) : (
-                playlists.map((p) => {
-                  const s = playlistStats[p.id];
-                  const recs = playlistRecs[p.id];
-                  const recsLoading = playlistRecsLoadingId === p.id;
-                  return (
-                    <div key={p.id} style={{ marginBottom: 10 }}>
-                      <div className="track" style={{ marginBottom: 0 }}>
-                        {p.image ? <img src={p.image} alt="" /> : <div style={{ width: 56, height: 56, borderRadius: 6, background: "#222" }} />}
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <div className="name">{p.name}</div>
-                          <div className="meta">{p.owner}</div>
-                          {s && (
-                            s.track_count === 0 ? (
-                              <div className="meta" style={{ fontSize: 12 }}>Empty playlist.</div>
-                            ) : (
-                              <div className="meta" style={{ fontFamily: "ui-monospace, monospace", fontSize: 12, marginTop: 6 }}>
-                            {s.stats.avg_tempo ?? "—"} BPM · energy {s.stats.avg_energy ?? "—"} · dance {s.stats.avg_danceability ?? "—"}
-                                <span style={{ opacity: 0.6 }}> ({s.feature_coverage}/{s.track_count} tracks{s.track_count >= s.max_tracks ? `, capped at ${s.max_tracks}` : ""})</span>
-                              </div>
-                            )
-                          )}
-                          {p.url && <a href={p.url} target="_blank" rel="noreferrer">Open in Spotify ↗</a>}
-                        </div>
-                        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                          {!s && (
-                            <button
-                              className="secondary"
-                              onClick={() => analyzePlaylist(p.id)}
-                              disabled={playlistLoadingId === p.id}
-                            >
-                              {playlistLoadingId === p.id ? "…" : "Analyze"}
-                            </button>
-                          )}
-                          {s && s.track_count > 0 && !recs && (
-                            <button
-                              className="secondary"
-                              onClick={() => findSimilar(p.id)}
-                              disabled={recsLoading}
-                            >
-                              {recsLoading ? "Finding…" : "Find similar"}
-                            </button>
-                          )}
-                        </div>
-                      </div>
+    function LibraryView({ playlists, playlistStats, playlistLoadingId, playlistRecs, playlistRecsLoadingId, analyzePlaylist, findSimilar, vibeInputs, vibeRecs, vibeLoadingId, vibeErrors, toggleVibe, setVibeText, searchByVibe, data }) {
+      return (
+        <div>
+          <h2>Your playlists <span className="count">- {playlists.length}</span></h2>
+          {playlists.length === 0 && <div className="empty">No playlists.</div>}
 
-                      {recs && (
-                        <div className="panel" style={{ marginTop: 8, marginBottom: 0 }}>
-                          <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "0 0 8px" }}>
-                            <div className="info" style={{ fontSize: 12, padding: 0, flex: 1 }}>
-                              Similar tracks (avg target: {recs.playlist_stats?.avg_tempo ?? "—"} BPM · energy {recs.playlist_stats?.avg_energy ?? "—"} · dance {recs.playlist_stats?.avg_danceability ?? "—"})
-                            </div>
-                            <button
-                              className="secondary"
-                              style={{ padding: "5px 10px", fontSize: 12 }}
-                              onClick={() => findSimilar(p.id)}
-                              disabled={recsLoading}
-                            >
-                              {recsLoading ? "Rolling…" : "Re-roll"}
-                            </button>
+          {playlists.map(p => {
+            const s = playlistStats[p.id];
+            const recs = playlistRecs[p.id];
+            const recsLoading = playlistRecsLoadingId === p.id;
+            const vibeOpen = p.id in vibeInputs;
+            const vibeVal = vibeInputs[p.id] || "";
+            const vRecs = vibeRecs[p.id];
+            const vibeLoading = vibeLoadingId === p.id;
+            const vibeErr = vibeErrors && vibeErrors[p.id];
+            return (
+              <div key={p.id}>
+                <div className="pl-row">
+                  {p.image ? <img src={p.image} alt="" className="pl-art" /> : <div className="pl-art-ph" />}
+                  <div className="body">
+                    <div className="name">{p.name}</div>
+                    <div className="meta">{p.owner}</div>
+                    {s && (
+                      s.track_count === 0
+                        ? <div className="meta mono" style={{fontSize: 11.5, color: "var(--muted)"}}>Empty playlist.</div>
+                        : <div className="pl-meta-line">
+                            {s.stats.avg_tempo ?? "-"} BPM - energy {s.stats.avg_energy ?? "-"} - dance {s.stats.avg_danceability ?? "-"}
+                            <span style={{opacity: 0.6}}> ({s.feature_coverage}/{s.track_count}{s.track_count >= s.max_tracks ? `, capped ${s.max_tracks}` : ""})</span>
                           </div>
-                          {recs.recommendations.length === 0 ? (
-                            <div className="empty">No similar tracks found.</div>
-                          ) : (
-                            recs.recommendations.map((r, i) => {
-                              const f = r.features || {};
-                              return (
-                                <div key={r.id || i} className="track">
-                                  <div className="idx">{i + 1}</div>
-                                  {r.image ? <img src={r.image} alt="" /> : <div style={{ width: 56, height: 56, borderRadius: 6, background: "#222" }} />}
-                                  <div style={{ flex: 1, minWidth: 0 }}>
-                                    <div className="name">{r.name}</div>
-                                    <div className="meta">{r.artists.join(", ")}{r.album ? ` · ${r.album}` : ""}</div>
-                                    <div className="meta" style={{ fontFamily: "ui-monospace, monospace", fontSize: 12 }}>
-                                      {f.tempo ?? "—"} BPM · energy {f.energy ?? "—"} · dance {f.danceability ?? "—"}
-                                    </div>
-                                    {r.url && <a href={r.url} target="_blank" rel="noreferrer">Open in Spotify ↗</a>}
-                                  </div>
-                                </div>
-                              );
-                            })
-                          )}
+                    )}
+                  </div>
+                  <div className="row-actions">
+                    {!s && (
+                      <button className="ghost" onClick={() => analyzePlaylist(p.id)} disabled={playlistLoadingId === p.id}>
+                        {playlistLoadingId === p.id ? "Analyzing..." : "Analyze"}
+                      </button>
+                    )}
+                    {s && s.track_count > 0 && !recs && (
+                      <button className="ghost" onClick={() => findSimilar(p.id)} disabled={recsLoading}>
+                        {recsLoading ? "Finding..." : "Find similar"}
+                      </button>
+                    )}
+                    <button className="ghost" onClick={() => toggleVibe(p.id)}>
+                      {vibeOpen ? "Close vibe" : "By vibe"}
+                    </button>
+                    {p.url && <a className="open" href={p.url} target="_blank" rel="noreferrer">Open ↗</a>}
+                  </div>
+                </div>
+
+                {vibeOpen && (
+                  <>
+                    <div className="pl-vibe">
+                      <input
+                        type="text"
+                        value={vibeVal}
+                        placeholder="trap, spanish reggaeton, lofi study..."
+                        onChange={e => setVibeText(p.id, e.target.value)}
+                        onKeyDown={e => { if (e.key === "Enter") searchByVibe(p.id); }}
+                      />
+                      <button
+                        className="primary"
+                        onClick={() => searchByVibe(p.id)}
+                        disabled={vibeLoading || !vibeVal.trim()}
+                      >
+                        {vibeLoading ? "Searching..." : "Search"}
+                      </button>
+                    </div>
+                    {vibeErr && <div className="error" style={{padding: "0 14px 10px", fontSize: 13}}>Vibe search failed: {vibeErr}</div>}
+                  </>
+                )}
+
+                {recs && (
+                  <div className="pl-recs">
+                    <div className="recs-head">
+                      <span>Similar - target {recs.playlist_stats?.avg_tempo ?? "-"} BPM - energy {recs.playlist_stats?.avg_energy ?? "-"} - dance {recs.playlist_stats?.avg_danceability ?? "-"}</span>
+                      <button className="ghost" onClick={() => findSimilar(p.id)} disabled={recsLoading} style={{padding: "4px 10px", fontSize: 12}}>
+                        {recsLoading ? "Rolling..." : "Re-roll"}
+                      </button>
+                    </div>
+                    {recs.recommendations.length === 0
+                      ? <div className="empty">No similar tracks found.</div>
+                      : (
+                        <div className="results">
+                          {recs.recommendations.map((r, i) => (
+                            <TrackRow key={r.id || i} t={r} i={i} showFeatures />
+                          ))}
                         </div>
                       )}
-                    </div>
-                  );
-                })
-              )}
-
-              <h2>Recently played</h2>
-              {!data ? (
-                <div className="info">Loading…</div>
-              ) : data.recent.length === 0 ? (
-                <div className="empty">Nothing recent.</div>
-              ) : (
-                data.recent.map((t, i) => (
-                  <div key={(t.url || "") + i} className="track">
-                    <div className="idx">{i + 1}</div>
-                    {t.image ? <img src={t.image} alt="" /> : <div style={{ width: 56, height: 56, borderRadius: 6, background: "#222" }} />}
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div className="name">{t.name}</div>
-                      <div className="meta">{t.artists.join(", ")} · {t.album}</div>
-                      {t.url && <a href={t.url} target="_blank" rel="noreferrer">Open in Spotify ↗</a>}
-                    </div>
                   </div>
-                ))
-              )}
+                )}
+
+                {vRecs && (
+                  <div className="pl-recs">
+                    <div className="recs-head">
+                      <span>Vibe "{vRecs.vibe}" - target {vRecs.playlist_stats?.avg_tempo ?? "-"} BPM - energy {vRecs.playlist_stats?.avg_energy ?? "-"} - dance {vRecs.playlist_stats?.avg_danceability ?? "-"}</span>
+                      <button className="ghost" onClick={() => searchByVibe(p.id)} disabled={vibeLoading} style={{padding: "4px 10px", fontSize: 12}}>
+                        {vibeLoading ? "Searching..." : "Re-search"}
+                      </button>
+                    </div>
+                    {vRecs.recommendations.length === 0
+                      ? <div className="empty">No matching tracks found for that vibe.</div>
+                      : (
+                        <div className="results">
+                          {vRecs.recommendations.map((r, i) => (
+                            <TrackRow key={r.id || i} t={r} i={i} showFeatures />
+                          ))}
+                        </div>
+                      )}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+
+          <h2>Recently played</h2>
+          {!data
+            ? <SkeletonList n={4} />
+            : data.recent.length === 0
+            ? <div className="empty">Nothing recent.</div>
+            : (
+              <div className="results">
+                {data.recent.map((t, i) => <TrackRow key={(t.url||"")+i} t={t} i={i} />)}
+              </div>
+            )}
+        </div>
+      );
+    }
+
+    function TrackRow({ t, i, showFeatures }) {
+      const f = t.features || {};
+      const featurePieces = [];
+      if (f.tempo)        featurePieces.push(<span key="t"><b>{f.tempo}</b> BPM</span>);
+      if (f.key != null)  featurePieces.push(<span key="k"><b>{keyLabel(f.key, f.mode)}</b></span>);
+      if (f.energy != null)       featurePieces.push(<span key="e">energy <b>{f.energy}</b></span>);
+      if (f.danceability != null) featurePieces.push(<span key="d">dance <b>{f.danceability}</b></span>);
+      if (f.valence != null)      featurePieces.push(<span key="v">valence <b>{f.valence}</b></span>);
+      if (f.acousticness != null) featurePieces.push(<span key="a">acoustic <b>{f.acousticness}</b></span>);
+
+      return (
+        <div className="track">
+          <div className="idx">{String(i+1).padStart(2,"0")}</div>
+          {t.image ? <img src={t.image} alt="" className="art" /> : <div className="ph-art" />}
+          <div className="body">
+            <div className="name">{t.name}</div>
+            <div className="meta">
+              {Array.isArray(t.artists) ? t.artists.join(", ") : t.artists}
+              {t.album ? <span style={{opacity: 0.5}}> - {t.album}</span> : null}
             </div>
-          )}
+            {showFeatures && featurePieces.length > 0 && (
+              <div className="features">
+                {featurePieces.flatMap((el, idx) =>
+                  idx === 0 ? [el] : [<span key={"s"+idx} className="sep">-</span>, el]
+                )}
+              </div>
+            )}
+          </div>
+          {t.url && <a className="open" href={t.url} target="_blank" rel="noreferrer">Open ↗</a>}
+        </div>
+      );
+    }
+
+    function Stat({ v, sub, k }) {
+      return (
+        <div className="stat">
+          <div className="v">{v}{sub && <span className="sub">{sub}</span>}</div>
+          <div className="k">{k}</div>
+        </div>
+      );
+    }
+
+    function SkeletonList({ n = 4, withFeatures = false }) {
+      return (
+        <div className="results">
+          {Array.from({length: n}).map((_, i) => (
+            <div key={i} className="track" style={{pointerEvents: "none"}}>
+              <div className="idx mono">{String(i+1).padStart(2,"0")}</div>
+              <div className="skel" style={{width: 60, height: 60, borderRadius: 10}} />
+              <div className="body" style={{display: "flex", flexDirection: "column", gap: 6}}>
+                <div className="skel" style={{height: 14, width: "55%"}} />
+                <div className="skel" style={{height: 12, width: "35%"}} />
+                {withFeatures && <div className="skel" style={{height: 10, width: "70%"}} />}
+              </div>
+              <div className="skel" style={{width: 56, height: 22, borderRadius: 6}} />
+            </div>
+          ))}
         </div>
       );
     }

@@ -7,6 +7,7 @@ from analyze import (
     list_playlists,
     playlist_recommendations,
     playlist_stats,
+    playlist_vibe_search,
     VALID_RANGES,
 )
 from filter_search import filter_search
@@ -161,6 +162,27 @@ def api_playlist_recommendations(playlist_id):
     return jsonify(data)
 
 
+@app.route("/api/playlists/<playlist_id>/vibe")
+def api_playlist_vibe(playlist_id):
+    vibe = request.args.get("vibe", "").strip()
+    if not vibe:
+        return jsonify({"error": "missing vibe"}), 400
+    try:
+        count = max(1, min(int(request.args.get("count", 10)), 25))
+    except ValueError:
+        count = 10
+    market = request.args.get("market", "US")
+    try:
+        data = playlist_vibe_search(playlist_id, vibe, count=count, market=market)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    if data is None:
+        return jsonify({"error": "not_authenticated"}), 401
+    if isinstance(data, dict) and data.get("error"):
+        return jsonify(data), 400
+    return jsonify(data)
+
+
 def _parse_float(name):
     v = request.args.get(name)
     if v is None or v == "":
@@ -186,6 +208,7 @@ def api_filter():
     query = request.args.get("q", "").strip()
     if not query:
         return jsonify({"error": "missing q"}), 400
+    vibe = request.args.get("vibe", "").split()
 
     filters = {
         "tempo_min": _parse_float("tempo_min"),
@@ -209,7 +232,7 @@ def api_filter():
     market = request.args.get("market", "US")
 
     try:
-        outcome = filter_search(query, filters, limit=limit, market=market)
+        outcome = filter_search(query, filters, limit=limit, market=market, vibe_keywords=vibe)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 

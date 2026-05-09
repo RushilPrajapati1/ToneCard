@@ -8,7 +8,9 @@ from filter_search import (
     reccobeats_recommendations,
     spotify_id_from_href,
 )
+from search import _search_tracks
 from spotify_client import get_client, get_user_client
+from vibe_profile import build_vibe_profile, text_match_score
 
 VALID_RANGES = ("short_term", "medium_term", "long_term")
 
@@ -285,5 +287,90 @@ def playlist_recommendations(playlist_id, count=10, candidate_size=30):
             "avg_danceability": avg_dance,
         },
         "candidate_count": len(cand_meta),
+        "feature_coverage": len(cand_features),
+    }
+
+
+def playlist_vibe_search(playlist_id, vibe, count=10, candidate_size=40, market="US"):
+    """Search Spotify by vibe text, biased toward the playlist's audio profile."""
+    vibe = (vibe or "").strip()
+    if not vibe:
+        return {"error": "missing vibe"}
+
+    sp = get_user_client()
+    if sp is None:
+        return None
+
+    track_ids = _playlist_track_ids(sp, playlist_id)
+    pl_features = get_features_for_spotify_ids(track_ids) if track_ids else {}
+    avg_tempo = _avg_feature(pl_features, "tempo", 1)
+    avg_energy = _avg_feature(pl_features, "energy", 2)
+    avg_dance = _avg_feature(pl_features, "danceability", 2)
+
+    raw = _search_tracks(vibe, total=candidate_size, market=market)
+    in_playlist = set(track_ids)
+    candidates = [t for t in raw if t.get("id") and t["id"] not in in_playlist]
+
+    cand_ids = [t["id"] for t in candidates]
+    cand_features = get_features_for_spotify_ids(cand_ids) if cand_ids else {}
+
+    profile = build_vibe_profile([vibe])
+    tokens = profile["tokens"] if profile else []
+
+    has_pl_targets = any(v is not None for v in (avg_tempo, avg_energy, avg_dance))
+
+    def _score(track):
+        feat = cand_features.get(track["id"]) or {}
+        haystack = track.get("name", "").lower()
+        haystack += " " + " ".join(a["name"].lower() for a in track.get("artists", []))
+        if track.get("album"):
+            haystack += " " + (track["album"].get("name") or "").lower()
+        text_score = text_match_score(haystack, tokens)
+
+        d = 0.0
+        n = 0
+        if avg_tempo is not None and feat.get("tempo") is not None:
+            d += abs(feat["tempo"] - avg_tempo) / 100.0; n += 1
+        if avg_energy is not None and feat.get("energy") is not None:
+            d += abs(feat["energy"] - avg_energy); n += 1
+        if avg_dance is not None and feat.get("danceability") is not None:
+            d += abs(feat["danceability"] - avg_dance); n += 1
+        playlist_score = max(0.0, 1.0 - (d / n)) if n else 0.0
+
+        popularity_score = max(track.get("popularity", 0), 0) / 100.0
+
+        if has_pl_targets:
+            return (0.45 * text_score) + (0.45 * playlist_score) + (0.10 * popularity_score)
+        return (0.75 * text_score) + (0.25 * popularity_score)
+
+    candidates.sort(key=_score, reverse=True)
+
+    items = []
+    for t in candidates[:count]:
+        feat = cand_features.get(t["id"]) or {}
+        items.append({
+            "id": t["id"],
+            "name": t.get("name", ""),
+            "artists": [a["name"] for a in t.get("artists", [])],
+            "album": (t.get("album") or {}).get("name", ""),
+            "image": ((t.get("album") or {}).get("images") or [{}])[-1].get("url"),
+            "url": (t.get("external_urls") or {}).get("spotify", ""),
+            "popularity": t.get("popularity", 0),
+            "features": {
+                "tempo": round(feat["tempo"], 1) if feat.get("tempo") is not None else None,
+                "energy": round(feat["energy"], 2) if feat.get("energy") is not None else None,
+                "danceability": round(feat["danceability"], 2) if feat.get("danceability") is not None else None,
+            },
+        })
+
+    return {
+        "vibe": vibe,
+        "recommendations": items,
+        "playlist_stats": {
+            "avg_tempo": avg_tempo,
+            "avg_energy": avg_energy,
+            "avg_danceability": avg_dance,
+        },
+        "candidate_count": len(candidates),
         "feature_coverage": len(cand_features),
     }

@@ -19,6 +19,33 @@ _client = None
 _user_oauth = None
 
 
+def _ensure_spotify_no_proxy():
+    """Avoid broken global proxies for Spotify OAuth/token calls."""
+    required_hosts = {"accounts.spotify.com", "api.spotify.com", "open.spotify.com"}
+
+    current = os.environ.get("NO_PROXY") or os.environ.get("no_proxy") or ""
+    entries = {h.strip() for h in current.split(",") if h.strip()}
+    merged = entries | required_hosts
+    value = ",".join(sorted(merged))
+
+    os.environ["NO_PROXY"] = value
+    os.environ["no_proxy"] = value
+
+
+def _disable_proxy_env_for_spotify():
+    """Hard-disable env proxy variables that break local Spotify auth flows."""
+    for key in (
+        "HTTP_PROXY",
+        "HTTPS_PROXY",
+        "ALL_PROXY",
+        "http_proxy",
+        "https_proxy",
+        "all_proxy",
+    ):
+        if key in os.environ:
+            os.environ.pop(key, None)
+
+
 def _require_credentials():
     if not CLIENT_ID or not CLIENT_SECRET:
         raise RuntimeError(
@@ -33,6 +60,8 @@ def get_client():
     if _client is not None:
         return _client
 
+    _ensure_spotify_no_proxy()
+    _disable_proxy_env_for_spotify()
     _require_credentials()
     auth = SpotifyClientCredentials(client_id=CLIENT_ID, client_secret=CLIENT_SECRET)
     _client = spotipy.Spotify(auth_manager=auth)
@@ -44,6 +73,8 @@ def get_user_oauth():
     if _user_oauth is not None:
         return _user_oauth
 
+    _ensure_spotify_no_proxy()
+    _disable_proxy_env_for_spotify()
     _require_credentials()
     _user_oauth = SpotifyOAuth(
         client_id=CLIENT_ID,
