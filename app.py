@@ -5,6 +5,8 @@ from flask import Flask, jsonify, request, redirect, send_from_directory
 from analyze import (
     analyze,
     list_playlists,
+    mood_history,
+    mood_search,
     playlist_recommendations,
     playlist_stats,
     playlist_vibe_search,
@@ -159,6 +161,38 @@ def api_playlist_recommendations(playlist_id):
         return jsonify({"error": str(e)}), 500
     if data is None:
         return jsonify({"error": "not_authenticated"}), 401
+    return jsonify(data)
+
+
+@app.route("/api/mood/history")
+def api_mood_history():
+    try:
+        data = mood_history()
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    if data is None:
+        return jsonify({"error": "not_authenticated"}), 401
+    return jsonify(data)
+
+
+@app.route("/api/mood")
+def api_mood():
+    valence = request.args.get("valence")
+    energy = request.args.get("energy")
+    if valence is None or energy is None:
+        return jsonify({"error": "missing valence or energy"}), 400
+    try:
+        count = max(1, min(int(request.args.get("count", 10)), 25))
+    except ValueError:
+        count = 10
+    try:
+        data = mood_search(valence, energy, count=count)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    if data is None:
+        return jsonify({"error": "not_authenticated"}), 401
+    if isinstance(data, dict) and data.get("error"):
+        return jsonify(data), 400
     return jsonify(data)
 
 

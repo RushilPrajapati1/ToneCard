@@ -64,7 +64,7 @@ def get_client():
     _disable_proxy_env_for_spotify()
     _require_credentials()
     auth = SpotifyClientCredentials(client_id=CLIENT_ID, client_secret=CLIENT_SECRET)
-    _client = spotipy.Spotify(auth_manager=auth)
+    _client = spotipy.Spotify(auth_manager=auth, retries=0, status_retries=0, requests_timeout=10)
     return _client
 
 
@@ -92,4 +92,4 @@ def get_user_client():
     token = oauth.get_cached_token()
     if not token:
         return None
-    return spotipy.Spotify(auth=token["access_token"])
+    return spotipy.Spotify(auth=token["access_token"], retries=0, status_retries=0, requests_timeout=10)

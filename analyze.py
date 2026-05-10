@@ -2,6 +2,13 @@ import random
 from collections import Counter
 from concurrent.futures import ThreadPoolExecutor
 
+from feature_vectors import (
+    DEFAULT_WEIGHTS,
+    centroid,
+    closeness_score,
+    euclidean_distance,
+    track_to_vector,
+)
 from filter_search import (
     _spotify_to_reccobeats_map,
     get_features_for_spotify_ids,
@@ -244,15 +251,13 @@ def playlist_recommendations(playlist_id, count=10, candidate_size=30):
 
     sp_tracks = _fetch_tracks_parallel(cand_ids)
 
+    pl_vectors = [track_to_vector(pl_features[tid]) for tid in track_ids if tid in pl_features]
+    pl_centroid = centroid(pl_vectors)
+
     def _distance(feat):
-        d = 0.0
-        if avg_tempo is not None and feat.get("tempo") is not None:
-            d += abs(feat["tempo"] - avg_tempo) / 200.0
-        if avg_energy is not None and feat.get("energy") is not None:
-            d += abs(feat["energy"] - avg_energy)
-        if avg_dance is not None and feat.get("danceability") is not None:
-            d += abs(feat["danceability"] - avg_dance)
-        return d
+        if pl_centroid is None:
+            return 0.0
+        return euclidean_distance(track_to_vector(feat), pl_centroid, weights=DEFAULT_WEIGHTS)
 
     items = []
     for sid, meta in cand_meta.items():
@@ -317,7 +322,8 @@ def playlist_vibe_search(playlist_id, vibe, count=10, candidate_size=40, market=
     profile = build_vibe_profile([vibe])
     tokens = profile["tokens"] if profile else []
 
-    has_pl_targets = any(v is not None for v in (avg_tempo, avg_energy, avg_dance))
+    pl_vectors = [track_to_vector(pl_features[tid]) for tid in track_ids if tid in pl_features]
+    pl_centroid = centroid(pl_vectors)
 
     def _score(track):
         feat = cand_features.get(track["id"]) or {}
@@ -327,19 +333,14 @@ def playlist_vibe_search(playlist_id, vibe, count=10, candidate_size=40, market=
             haystack += " " + (track["album"].get("name") or "").lower()
         text_score = text_match_score(haystack, tokens)
 
-        d = 0.0
-        n = 0
-        if avg_tempo is not None and feat.get("tempo") is not None:
-            d += abs(feat["tempo"] - avg_tempo) / 100.0; n += 1
-        if avg_energy is not None and feat.get("energy") is not None:
-            d += abs(feat["energy"] - avg_energy); n += 1
-        if avg_dance is not None and feat.get("danceability") is not None:
-            d += abs(feat["danceability"] - avg_dance); n += 1
-        playlist_score = max(0.0, 1.0 - (d / n)) if n else 0.0
+        if pl_centroid is not None:
+            playlist_score = closeness_score(track_to_vector(feat), pl_centroid, weights=DEFAULT_WEIGHTS)
+        else:
+            playlist_score = 0.0
 
         popularity_score = max(track.get("popularity", 0), 0) / 100.0
 
-        if has_pl_targets:
+        if pl_centroid is not None:
             return (0.45 * text_score) + (0.45 * playlist_score) + (0.10 * popularity_score)
         return (0.75 * text_score) + (0.25 * popularity_score)
 
@@ -372,5 +373,149 @@ def playlist_vibe_search(playlist_id, vibe, count=10, candidate_size=40, market=
             "avg_danceability": avg_dance,
         },
         "candidate_count": len(candidates),
+        "feature_coverage": len(cand_features),
+    }
+
+
+def _user_top_track_ids(sp, time_ranges=("short_term", "medium_term"), per_range=20):
+    seen = []
+    seen_set = set()
+    for tr in time_ranges:
+        try:
+            page = sp.current_user_top_tracks(time_range=tr, limit=per_range)
+        except Exception:
+            continue
+        for t in page.get("items") or []:
+            tid = t.get("id")
+            if tid and tid not in seen_set:
+                seen_set.add(tid)
+                seen.append((tid, t))
+    return seen
+
+
+def mood_history(limit=40):
+    """Plot the user's recent listening as (valence, energy) points."""
+    sp = get_user_client()
+    if sp is None:
+        return None
+
+    pairs = _user_top_track_ids(sp)
+    track_ids = [tid for tid, _ in pairs][:limit]
+    if not track_ids:
+        return {"points": []}
+
+    feats = get_features_for_spotify_ids(track_ids)
+    track_by_id = dict(pairs)
+
+    points = []
+    for tid in track_ids:
+        f = feats.get(tid)
+        if not f or f.get("valence") is None or f.get("energy") is None:
+            continue
+        t = track_by_id.get(tid) or {}
+        points.append({
+            "id": tid,
+            "name": t.get("name", ""),
+            "artists": [a["name"] for a in t.get("artists", [])],
+            "image": ((t.get("album") or {}).get("images") or [{}])[-1].get("url"),
+            "url": (t.get("external_urls") or {}).get("spotify", ""),
+            "valence": round(float(f["valence"]), 3),
+            "energy": round(float(f["energy"]), 3),
+        })
+    return {"points": points}
+
+
+def mood_search(valence, energy, count=10, candidate_size=40):
+    """Return tracks whose audio features sit closest to a (valence, energy) target."""
+    try:
+        target_v = max(0.0, min(1.0, float(valence)))
+        target_e = max(0.0, min(1.0, float(energy)))
+    except (TypeError, ValueError):
+        return {"error": "invalid coordinates"}
+
+    sp = get_user_client()
+    if sp is None:
+        return None
+
+    pairs = _user_top_track_ids(sp)
+    user_track_ids = [tid for tid, _ in pairs]
+    if not user_track_ids:
+        return {
+            "target": {"valence": target_v, "energy": target_e},
+            "recommendations": [],
+            "candidate_count": 0,
+        }
+
+    seed_pool = user_track_ids[:30]
+    seeds = random.sample(seed_pool, min(5, len(seed_pool)))
+    s2r = _spotify_to_reccobeats_map(seeds)
+    recco_seed_ids = list(s2r.values())
+    if not recco_seed_ids:
+        return {
+            "target": {"valence": target_v, "energy": target_e},
+            "recommendations": [],
+            "candidate_count": 0,
+        }
+
+    raw = reccobeats_recommendations(recco_seed_ids, size=candidate_size)
+    in_history = set(user_track_ids)
+    cand_meta = {}
+    for c in raw:
+        sid = spotify_id_from_href(c.get("href"))
+        if not sid or sid in in_history or sid in cand_meta:
+            continue
+        cand_meta[sid] = c
+
+    cand_ids = list(cand_meta.keys())
+    if not cand_ids:
+        return {
+            "target": {"valence": target_v, "energy": target_e},
+            "recommendations": [],
+            "candidate_count": 0,
+        }
+
+    cand_features = get_features_for_spotify_ids(cand_ids)
+
+    def _mood_distance(feat):
+        v = feat.get("valence")
+        e = feat.get("energy")
+        if v is None or e is None:
+            return None
+        dv = float(v) - target_v
+        de = float(e) - target_e
+        return (dv * dv + de * de) ** 0.5
+
+    items = []
+    for sid, meta in cand_meta.items():
+        feat = cand_features.get(sid)
+        if not feat:
+            continue
+        d = _mood_distance(feat)
+        if d is None:
+            continue
+        items.append({
+            "id": sid,
+            "name": meta.get("trackTitle", ""),
+            "artists": [a["name"] for a in (meta.get("artists") or [])],
+            "album": "",
+            "image": None,
+            "url": meta.get("href") or "",
+            "features": {
+                "valence": round(float(feat["valence"]), 3),
+                "energy": round(float(feat["energy"]), 3),
+                "tempo": round(float(feat["tempo"]), 1) if feat.get("tempo") is not None else None,
+                "danceability": round(float(feat["danceability"]), 2) if feat.get("danceability") is not None else None,
+            },
+            "_d": d,
+        })
+
+    items.sort(key=lambda x: x["_d"])
+    for x in items:
+        x.pop("_d", None)
+
+    return {
+        "target": {"valence": target_v, "energy": target_e},
+        "recommendations": items[:count],
+        "candidate_count": len(cand_meta),
         "feature_coverage": len(cand_features),
     }

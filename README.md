@@ -1,12 +1,14 @@
-# Spotify Search APP
+# Tonecard — Spotify vibe search & listening stats
 
-A small Flask + React web app for Spotify with three modes:
+A small Flask + React app for digging into your Spotify listening. Three tabs:
 
-1. **Search** — vibe-keyword re-ranking on top of Spotify search.
-2. **Filter** — search by audio features Spotify's UI doesn't expose: BPM, key, mode, energy, danceability, valence, acousticness. Audio features come from [ReccoBeats](https://reccobeats.com), since Spotify deprecated `/audio-features` for new apps in late 2024.
-3. **My Music** — OAuth into your account to see top tracks, top artists, top genres, and recent plays.
+1. **My Music** — your playlists with one-click analysis (avg BPM / energy / dance), "Find similar" recommendations seeded from each playlist, and **By vibe** search anchored to a playlist's audio profile (e.g. type `spanish trap` against your UK playlist and get tracks that fit both the word *and* the playlist's BPM/energy/dance).
+2. **Mood** — an interactive 2D plane of valence (sad ↔ happy) × energy (calm ↔ intense). Dim dots are your top tracks, plotted from real audio features. Click anywhere on the plane to surface tracks closest to that mood.
+3. **Stats** — top tracks, top artists, top genres, recent plays, and aggregate listening-shape stats. Time range switches between 4w / 6m / all-time.
 
-A CLI for the basic search is also included.
+There's also a dark-mode toggle in the topbar (system-preference default, persisted to `localStorage`) and a CLI for basic search.
+
+> Audio features come from [ReccoBeats](https://reccobeats.com). Spotify has progressively restricted `/audio-features` for new apps; ReccoBeats fills the gap with the same shape of data (tempo, energy, danceability, valence, acousticness, instrumentalness, speechiness, liveness — everything except loudness).
 
 ## Prerequisites
 
@@ -28,29 +30,27 @@ A CLI for the basic search is also included.
    pip install -r requirements.txt
    ```
 
-3. **Configure your Spotify app credentials.** Copy `.env.example` to `.env` and fill in your `CLIENT_ID` / `CLIENT_SECRET` from https://developer.spotify.com/dashboard:
+3. **Configure Spotify credentials.** Copy `.env.example` to `.env` and paste in `CLIENT_ID` / `CLIENT_SECRET` from your developer dashboard:
 
    ```bash
    cp .env.example .env
-   # then edit .env and paste your real values
+   # edit .env and paste your real values
    ```
 
-   The `.env` file is gitignored. The app loads it automatically via `python-dotenv`. Alternatively, export the vars directly:
+   `.env` is gitignored and loaded automatically via `python-dotenv`. Alternatively, export them directly:
 
    ```bash
    export SPOTIFY_CLIENT_ID=...
    export SPOTIFY_CLIENT_SECRET=...
    ```
 
-4. **Add the OAuth redirect URI.** The "My Music" tab logs into your personal Spotify account, so your Spotify app needs a redirect URI registered. In the Spotify Developer Dashboard:
+4. **Register the OAuth redirect URI.** My Music / Mood / Stats all log into your personal Spotify account, so:
 
-   - Open your app → **Edit Settings** → **Redirect URIs**
+   - Open your app in the Spotify Developer Dashboard → **Edit Settings** → **Redirect URIs**
    - Add: `http://127.0.0.1:5050/callback`
    - **Save**
 
-   Without this, the Connect Spotify flow will fail with `INVALID_CLIENT: Invalid redirect URI`.
-
-   The OAuth scopes used are `user-top-read`, `user-read-recently-played`, `user-library-read`, and `user-read-private`.
+   Without this you'll see `INVALID_CLIENT: Invalid redirect URI`. Scopes used: `user-top-read`, `user-read-recently-played`, `user-library-read`, `user-read-private`, `playlist-read-private`, `playlist-read-collaborative`.
 
 ## Run the web app
 
@@ -58,13 +58,11 @@ A CLI for the basic search is also included.
 python app.py
 ```
 
-Then open http://127.0.0.1:5050 in your browser. You'll see two tabs:
+Then open http://127.0.0.1:5050. Click **Connect Spotify** on any tab to authorize.
 
-- **Search** — vibe-keyword search (no login required).
-- **Filter** — set ranges for BPM, energy, danceability, valence, acousticness, plus optional key and mode. Backend pulls 50 candidates from Spotify, fetches audio features from ReccoBeats, drops anything outside your filters, and ranks by closeness to the range midpoints. Each result shows the matched feature values inline.
-- **My Music** — click **Connect Spotify** to authorize. After redirect, you'll see your top tracks, top artists, top genres (chips), recent plays, and aggregate stats. A time-range selector switches between *Last 4 weeks*, *Last 6 months*, and *All time*.
+The dev server runs with `debug=False` — when you change Python files, restart the process to pick them up. The single-page React UI in `static/index.html` reloads on browser refresh (it's compiled in-browser via Babel standalone).
 
-Click **Disconnect** to clear the cached token (`.cache-user`).
+Click **Disconnect** to clear the cached OAuth token (`.cache-user`).
 
 ## Run the CLI (search only)
 
@@ -78,40 +76,39 @@ Re-rank by vibe keywords:
 python main.py "rainy day jazz" --vibe chill lofi mellow
 ```
 
-All options:
+Options: `python main.py "<query>" [--vibe kw1 kw2 ...] [--limit N] [--market US]`.
 
-```bash
-python main.py "<query>" [--vibe kw1 kw2 ...] [--limit N] [--market US]
-```
+## API endpoints
 
-- `query` — required search string
-- `--vibe` — keywords used to re-rank results (matched against track/artist/album names)
-- `--limit` — number of results to print (default: 10)
-- `--market` — ISO market code (default: `US`)
-
-## API endpoints (web app)
-
-| Method | Path             | Purpose                                                             |
-| ------ | ---------------- | ------------------------------------------------------------------- |
-| GET    | `/api/search`    | Vibe search. Query params: `q`, `vibe`, `limit`, `market`.          |
-| GET    | `/api/filter`    | Audio-feature filter. Params: `q`, `tempo_min/max`, `energy_min/max`, `danceability_min/max`, `valence_min/max`, `acousticness_min/max`, `key` (0–11), `mode` (0/1), `limit`. |
-| GET    | `/login`         | Start Spotify OAuth flow.                                           |
-| GET    | `/callback`      | OAuth redirect target — caches token to `.cache-user`.              |
-| POST   | `/logout`        | Delete cached user token.                                           |
-| GET    | `/api/me`        | Current authenticated user (or `{authenticated: false}`).           |
-| GET    | `/api/analyze`   | Top tracks/artists/genres/recents. `time_range`, `limit` params.    |
+| Method | Path                                          | Purpose |
+| ------ | --------------------------------------------- | ------- |
+| GET    | `/api/me`                                     | Current authenticated user (or `{authenticated: false}`). |
+| GET    | `/login` / `/callback`                        | Start OAuth / receive redirect (caches token to `.cache-user`). |
+| POST   | `/logout`                                     | Delete the cached user token. |
+| GET    | `/api/search?q=&vibe=&limit=&market=`         | Vibe-aware Spotify search, re-ranked by text + audio profile. |
+| GET    | `/api/filter?q=&tempo_min=&...`               | Spotify search → ReccoBeats features → range filter. Params: `tempo_min/max`, `energy_min/max`, `danceability_min/max`, `valence_min/max`, `acousticness_min/max`, `key` (0–11), `mode` (0/1), `vibe`, `limit`. |
+| GET    | `/api/analyze?time_range=&limit=`             | Top tracks/artists/genres/recents + listening-shape stats. |
+| GET    | `/api/playlists`                              | All playlists the user owns or follows. |
+| GET    | `/api/playlists/<id>/stats`                   | Avg tempo / energy / danceability over the first 100 tracks. |
+| GET    | `/api/playlists/<id>/recommendations?count=`  | Tracks similar to the playlist (ReccoBeats seeded). |
+| GET    | `/api/playlists/<id>/vibe?vibe=&count=`       | Vibe-text search ranked by closeness to the playlist's audio profile. |
+| GET    | `/api/mood/history`                           | Your top tracks plotted as `(valence, energy)` points. |
+| GET    | `/api/mood?valence=&energy=&count=`           | Tracks closest to a clicked `(valence, energy)` target. |
 
 ## Files
 
-- `app.py` — Flask server (search + filter + analyze endpoints, OAuth)
-- `spotify_client.py` — Spotipy clients (client-credentials and user OAuth)
-- `search.py` — vibe search and re-rank logic
-- `filter_search.py` — Spotify search + ReccoBeats audio-feature filter/rank
-- `analyze.py` — pulls user listening data and aggregates genres/stats
-- `main.py` — CLI for search
-- `static/index.html` — single-page React UI (Search + Filter + My Music tabs)
+- `app.py` — Flask routes (OAuth + all endpoints above).
+- `spotify_client.py` — Spotipy clients (client-credentials + user OAuth). Configured with `retries=0` so 429s fail fast instead of silently sleeping for an hour.
+- `search.py` — `improved_search`: Spotify search → vibe-keyword + audio-feature re-rank.
+- `filter_search.py` — ReccoBeats audio-feature fetch, recommendations API, range filter.
+- `analyze.py` — user listening, playlist stats, playlist recommendations, vibe search anchored to a playlist, mood history, mood search.
+- `vibe_profile.py` — vibe presets (chill / hype / focus / etc.), feature specs, text-match + closeness scoring helpers.
+- `feature_vectors.py` — track-to-vector normalization, centroid, weighted Euclidean distance and cosine similarity. Used by playlist-anchored ranking in `analyze.py`.
+- `main.py` — CLI wrapper around `improved_search`.
+- `static/index.html` — single-page React UI (Babel standalone, no build step). Tabs, dark-mode toggle, mood plane SVG, all in one file.
 
 ## Notes
 
-- `.env`, `.cache` (client-credentials token), and `.cache-user` (your OAuth token) are all gitignored — your secret never enters git history.
-- If you fork this repo, copy `.env.example` to `.env` and fill in your own Spotify app credentials.
+- `.env`, `.cache` (client-credentials token), and `.cache-user` (your OAuth token) are gitignored.
+- If you fork this repo, copy `.env.example` to `.env` and fill in your own Spotify credentials.
+- Spotify's per-app rate limit is a 30-second rolling window. Heavy use of "Find similar" (which still does per-track Spotify lookups for album art) can hit 429 — the app surfaces those inline now rather than hanging.

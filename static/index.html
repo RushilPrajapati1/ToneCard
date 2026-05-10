@@ -671,6 +671,74 @@
     }
     .demo-dot { width: 6px; height: 6px; border-radius: 999px; background: var(--accent); }
 
+    .mood-wrap {
+      display: grid;
+      grid-template-columns: minmax(0, 420px) 1fr;
+      gap: 28px;
+      align-items: start;
+      margin-bottom: 28px;
+    }
+    @media (max-width: 760px) {
+      .mood-wrap { grid-template-columns: 1fr; }
+    }
+    .mood-plane {
+      position: relative;
+      aspect-ratio: 1;
+      width: 100%;
+      max-width: 420px;
+      border: 1px solid var(--line);
+      border-radius: var(--r-md);
+      background: var(--paper-2);
+      padding: 28px;
+      box-sizing: border-box;
+    }
+    .mood-plane svg {
+      width: 100%; height: 100%;
+      display: block;
+      cursor: crosshair;
+      user-select: none;
+    }
+    .mood-axis-label {
+      position: absolute;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 10.5px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--muted);
+      pointer-events: none;
+    }
+    .mood-axis-label.top    { top: 8px;    left: 50%; transform: translateX(-50%); }
+    .mood-axis-label.bottom { bottom: 8px; left: 50%; transform: translateX(-50%); }
+    .mood-axis-label.left   { left: 8px;   top: 50%;  transform: translateY(-50%) rotate(-90deg); transform-origin: left center; }
+    .mood-axis-label.right  { right: 8px;  top: 50%;  transform: translateY(-50%) rotate(90deg);  transform-origin: right center; }
+
+    .mood-side {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      min-width: 0;
+    }
+    .mood-coord {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 12.5px;
+      color: var(--ink-2);
+    }
+    .mood-coord b { color: var(--ink); font-weight: 500; }
+    .mood-presets { display: flex; flex-wrap: wrap; gap: 6px; }
+    .mood-preset {
+      appearance: none;
+      background: var(--paper-2);
+      border: 1px solid var(--line);
+      color: var(--ink-2);
+      font-family: inherit;
+      font-size: 12px;
+      padding: 5px 10px;
+      border-radius: 999px;
+      cursor: pointer;
+      transition: color 120ms, border-color 120ms;
+    }
+    .mood-preset:hover { color: var(--ink); border-color: var(--ink-2); }
+
     .foot {
       margin-top: 48px;
       padding-top: 18px;
@@ -754,7 +822,8 @@
 
     function App() {
       const params = new URLSearchParams(window.location.search);
-      const initial = params.get("tab") === "stats" ? "stats" : "mine";
+      const tabParam = params.get("tab");
+      const initial = tabParam === "stats" ? "stats" : tabParam === "mood" ? "mood" : "mine";
       const [tab, setTab] = useState(initial);
       const [theme, setTheme] = useState(() =>
         document.documentElement.getAttribute("data-theme") || "light"
@@ -796,11 +865,13 @@
             </button>
             <nav className="tabs" role="tablist">
               <button role="tab" aria-selected={tab==="mine"} className={`tab ${tab==="mine"?"active":""}`} onClick={() => setTab("mine")}>My Music</button>
+              <button role="tab" aria-selected={tab==="mood"} className={`tab ${tab==="mood"?"active":""}`} onClick={() => setTab("mood")}>Mood</button>
               <button role="tab" aria-selected={tab==="stats"} className={`tab ${tab==="stats"?"active":""}`} onClick={() => setTab("stats")}>Stats</button>
             </nav>
           </header>
 
           {tab === "mine" && <MineTab />}
+          {tab === "mood" && <MoodTab />}
           {tab === "stats" && <StatsTab />}
 
           <footer className="foot">
@@ -808,6 +879,225 @@
             <div>Tonecard - local Flask - :5050</div>
           </footer>
         </div>
+      );
+    }
+
+    const MOOD_PRESETS = [
+      { label: "Calm + sad",      v: 0.25, e: 0.20 },
+      { label: "Calm + happy",    v: 0.75, e: 0.25 },
+      { label: "Intense + sad",   v: 0.20, e: 0.80 },
+      { label: "Intense + happy", v: 0.80, e: 0.85 },
+      { label: "Center",          v: 0.50, e: 0.50 },
+    ];
+
+    function MoodPlane({ history, point, onPick }) {
+      const SIZE = 360;
+
+      function handleClick(e) {
+        const rect = e.currentTarget.getBoundingClientRect();
+        const x = (e.clientX - rect.left) / rect.width;
+        const y = (e.clientY - rect.top) / rect.height;
+        const valence = Math.max(0, Math.min(1, x));
+        const energy  = Math.max(0, Math.min(1, 1 - y));
+        onPick({ valence, energy });
+      }
+
+      return (
+        <div className="mood-plane">
+          <div className="mood-axis-label top">Intense</div>
+          <div className="mood-axis-label bottom">Calm</div>
+          <div className="mood-axis-label left">Sad</div>
+          <div className="mood-axis-label right">Happy</div>
+          <svg viewBox={`0 0 ${SIZE} ${SIZE}`} onClick={handleClick}>
+            <rect x="0" y="0" width={SIZE} height={SIZE} fill="var(--paper)" stroke="var(--line)" />
+            <line x1={SIZE/2} y1="0" x2={SIZE/2} y2={SIZE} stroke="var(--line)" strokeDasharray="3 3" />
+            <line x1="0" y1={SIZE/2} x2={SIZE} y2={SIZE/2} stroke="var(--line)" strokeDasharray="3 3" />
+
+            {(history || []).map((p, i) => (
+              <circle
+                key={p.id || i}
+                cx={p.valence * SIZE}
+                cy={(1 - p.energy) * SIZE}
+                r="4"
+                fill="var(--ink-2)"
+                fillOpacity="0.45"
+              >
+                <title>{p.name}{p.artists && p.artists.length ? " - " + p.artists.join(", ") : ""}</title>
+              </circle>
+            ))}
+
+            {point && (
+              <g>
+                <circle
+                  cx={point.valence * SIZE}
+                  cy={(1 - point.energy) * SIZE}
+                  r="9"
+                  fill="var(--accent)"
+                  fillOpacity="0.25"
+                  stroke="var(--accent)"
+                  strokeWidth="2"
+                />
+                <line
+                  x1={point.valence * SIZE - 14} y1={(1 - point.energy) * SIZE}
+                  x2={point.valence * SIZE + 14} y2={(1 - point.energy) * SIZE}
+                  stroke="var(--accent)" strokeWidth="1"
+                />
+                <line
+                  x1={point.valence * SIZE} y1={(1 - point.energy) * SIZE - 14}
+                  x2={point.valence * SIZE} y2={(1 - point.energy) * SIZE + 14}
+                  stroke="var(--accent)" strokeWidth="1"
+                />
+              </g>
+            )}
+          </svg>
+        </div>
+      );
+    }
+
+    function MoodTab() {
+      const [me, setMe] = useState(null);
+      const [meLoading, setMeLoading] = useState(true);
+      const [history, setHistory] = useState([]);
+      const [point, setPoint] = useState(null);
+      const [results, setResults] = useState(null);
+      const [loading, setLoading] = useState(false);
+      const [error, setError] = useState(null);
+      const [demoMode, setDemoMode] = useState(false);
+      const [authError] = useState(() => new URLSearchParams(window.location.search).get("auth_error"));
+
+      const DEMO_HISTORY = [
+        { id: "h1", name: "Avril 14th",        artists: ["Aphex Twin"],   valence: 0.18, energy: 0.18 },
+        { id: "h2", name: "An Ending (Ascent)",artists: ["Brian Eno"],    valence: 0.35, energy: 0.18 },
+        { id: "h3", name: "Cirrus",            artists: ["Bonobo"],       valence: 0.52, energy: 0.62 },
+        { id: "h4", name: "Open Eye Signal",   artists: ["Jon Hopkins"],  valence: 0.55, energy: 0.81 },
+        { id: "h5", name: "Ekstasis",          artists: ["J. Barwick"],   valence: 0.34, energy: 0.42 },
+        { id: "h6", name: "Saada Bonaire",     artists: ["Saada Bonaire"],valence: 0.71, energy: 0.55 },
+      ];
+
+      async function loadMe() {
+        setMeLoading(true);
+        try {
+          const j = await safeFetch("/api/me");
+          setMe(j);
+        } catch (err) {
+          if (err.demo) {
+            setMe({ authenticated: true, display_name: "Riley - demo", country: "US", image: null, url: "#" });
+            setDemoMode(true);
+          } else {
+            setMe({ authenticated: false });
+          }
+        } finally { setMeLoading(false); }
+      }
+
+      async function loadHistory() {
+        try {
+          const j = await safeFetch("/api/mood/history");
+          setHistory(j.points || []);
+        } catch (err) {
+          if (err.demo) { setHistory(DEMO_HISTORY); setDemoMode(true); }
+          else if (err.status === 401) { setMe({ authenticated: false }); }
+          else setError(err.message || "Failed to load history.");
+        }
+      }
+
+      async function searchAt(p) {
+        setPoint(p);
+        setLoading(true); setError(null);
+        try {
+          const j = await safeFetch(`/api/mood?valence=${p.valence.toFixed(3)}&energy=${p.energy.toFixed(3)}&count=10`);
+          setResults(j);
+        } catch (err) {
+          if (err.demo) {
+            setResults({
+              target: p,
+              recommendations: DEMO_TRACKS.slice(0, 5).map((t, i) => ({
+                ...t, id: "m"+i,
+                features: { valence: DEMO_FEAT[i].valence, energy: DEMO_FEAT[i].energy, tempo: DEMO_FEAT[i].tempo, danceability: DEMO_FEAT[i].danceability },
+              })),
+              candidate_count: 5,
+            });
+          } else if (err.status === 401) {
+            setMe({ authenticated: false });
+          } else {
+            setError(err.message || "Search failed.");
+          }
+        } finally { setLoading(false); }
+      }
+
+      useEffect(() => { loadMe(); }, []);
+      useEffect(() => { if (me && me.authenticated) loadHistory(); }, [me && me.authenticated]);
+
+      if (meLoading) return (
+        <section>
+          <div className="hero">
+            <div className="eyebrow">Mood</div>
+            <h1 className="display">Loading your <em>mood map</em>...</h1>
+          </div>
+        </section>
+      );
+
+      if (!me || !me.authenticated) {
+        return (
+          <section>
+            <div className="hero">
+              <div className="eyebrow">Mood - OAuth</div>
+              <h1 className="display">Click anywhere to find tracks at that <em>mood</em>.</h1>
+              <p className="lede">A 2D plane of valence (sad to happy) and energy (calm to intense). We plot your top tracks as dots so you can see which corners you live in, then surface new tracks near wherever you click.</p>
+            </div>
+            <div className="gate">
+              <div className="gate-title">Connect <em>Spotify</em></div>
+              <div className="gate-sub">Read-only scopes: top read - recently-played - library read - profile.</div>
+              {authError && <div className="error" style={{padding: "8px 0"}}>Auth error: {authError}</div>}
+              <a href="/login" className="primary">Connect Spotify -&gt;</a>
+            </div>
+          </section>
+        );
+      }
+
+      const coordText = point
+        ? <span>Picked <b>valence {point.valence.toFixed(2)}</b> - <b>energy {point.energy.toFixed(2)}</b></span>
+        : <span>Click anywhere on the plane to search a mood.</span>;
+
+      return (
+        <section>
+          <div className="hero">
+            <div className="eyebrow">Mood</div>
+            <h1 className="display">Pick a <em>mood</em>, find tracks.</h1>
+            <p className="lede">Click anywhere on the plane. Dim dots are your top tracks - ranked by ReccoBeats audio features. Results below are tracks closest to your point in (valence, energy) space.</p>
+          </div>
+
+          <div className="mood-wrap">
+            <MoodPlane history={history} point={point} onPick={searchAt} />
+            <div className="mood-side">
+              <div className="mood-coord">{coordText}</div>
+              <div className="mood-presets">
+                {MOOD_PRESETS.map(p => (
+                  <button key={p.label} className="mood-preset" onClick={() => searchAt({ valence: p.v, energy: p.e })}>
+                    {p.label}
+                  </button>
+                ))}
+              </div>
+              <div className="info" style={{padding: 0, fontSize: 12.5}}>
+                History: <span className="mono">{history.length}</span> track{history.length === 1 ? "" : "s"} plotted{demoMode ? " - demo data" : ""}.
+              </div>
+            </div>
+          </div>
+
+          {error && <div className="error">{error}</div>}
+          {loading && <SkeletonList n={4} />}
+          {!loading && results && (
+            <>
+              <h2>Tracks near this mood <span className="count">- {results.recommendations.length}</span></h2>
+              {results.recommendations.length === 0
+                ? <div className="empty">No tracks found near that point. Try clicking somewhere else, or pick a preset.</div>
+                : (
+                  <div className="results">
+                    {results.recommendations.map((t, i) => <TrackRow key={t.id || i} t={t} i={i} showFeatures />)}
+                  </div>
+                )}
+            </>
+          )}
+        </section>
       );
     }
 
