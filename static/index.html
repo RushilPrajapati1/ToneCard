@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Tonecard · vibe search & listening stats</title>
+  <title>Tonecard · mood discovery</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -135,34 +135,6 @@
     .theme-toggle:hover { color: var(--ink); border-color: var(--ink-2); }
     .theme-toggle svg { width: 16px; height: 16px; display: block; }
 
-    .tabs {
-      display: inline-flex;
-      gap: 2px;
-      padding: 4px;
-      background: var(--paper-2);
-      border: 1px solid var(--line);
-      border-radius: 999px;
-    }
-    .tab {
-      appearance: none;
-      border: 0;
-      background: transparent;
-      color: var(--ink-2);
-      font-family: inherit;
-      font-size: 13.5px;
-      font-weight: 500;
-      padding: 8px 16px;
-      border-radius: 999px;
-      cursor: pointer;
-      letter-spacing: -0.005em;
-      transition: background 120ms ease, color 120ms ease;
-    }
-    .tab:hover { color: var(--ink); }
-    .tab.active {
-      background: var(--ink);
-      color: var(--paper);
-    }
-
     .hero { margin-bottom: 28px; }
     .eyebrow {
       font-size: 12px;
@@ -194,122 +166,6 @@
       gap: 10px;
     }
     h2 .count { color: var(--ink-2); font-weight: 500; letter-spacing: -0.005em; text-transform: none; font-size: 13px; }
-
-    .card {
-      background: var(--paper-2);
-      border: 1px solid var(--line);
-      border-radius: var(--r-lg);
-      padding: 22px;
-    }
-
-    .field { display: flex; flex-direction: column; gap: 6px; }
-    .field label {
-      font-size: 11.5px;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      color: var(--muted);
-      font-weight: 500;
-    }
-    input[type="text"], input[type="number"], input[type="search"], select {
-      appearance: none;
-      width: 100%;
-      background: var(--paper);
-      color: var(--ink);
-      border: 1px solid var(--line-2);
-      border-radius: var(--r-sm);
-      padding: 11px 13px;
-      font-family: inherit;
-      font-size: 15px;
-      letter-spacing: -0.005em;
-      outline: none;
-      transition: border-color 120ms ease, box-shadow 120ms ease;
-    }
-    input.mono, select.mono { font-family: "JetBrains Mono", monospace; font-size: 13.5px; }
-    input:focus, select:focus {
-      border-color: var(--ink);
-      box-shadow: 0 0 0 3px var(--focus-ring);
-    }
-
-    .search-row {
-      display: grid;
-      grid-template-columns: 1.4fr 1fr auto;
-      gap: 10px;
-      align-items: end;
-    }
-    @media (max-width: 720px) {
-      .search-row { grid-template-columns: 1fr; }
-    }
-
-    button.primary, a.primary {
-      appearance: none;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      background: var(--ink);
-      color: var(--paper);
-      border: 0;
-      border-radius: var(--r-sm);
-      padding: 11px 18px;
-      font-family: inherit;
-      font-weight: 500;
-      font-size: 14px;
-      letter-spacing: -0.005em;
-      cursor: pointer;
-      text-decoration: none;
-      transition: transform 120ms ease, background 120ms ease;
-      height: 42px;
-    }
-    button.primary:hover:not(:disabled), a.primary:hover { background: var(--ink-hover); }
-    button.primary:active { transform: translateY(1px); }
-    button.primary:disabled { opacity: 0.45; cursor: default; }
-
-    button.ghost {
-      appearance: none;
-      background: transparent;
-      color: var(--ink-2);
-      border: 1px solid var(--line-2);
-      border-radius: var(--r-sm);
-      padding: 8px 12px;
-      font-family: inherit;
-      font-size: 13px;
-      font-weight: 500;
-      cursor: pointer;
-      transition: background 120ms ease, border-color 120ms ease;
-    }
-    button.ghost:hover { background: var(--paper-2); border-color: var(--ink-2); color: var(--ink); }
-    button.ghost:disabled { opacity: 0.5; cursor: default; }
-
-    .range-grid {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 14px 18px;
-    }
-    @media (max-width: 720px) {
-      .range-grid { grid-template-columns: 1fr; }
-    }
-    .range-row {
-      display: grid;
-      grid-template-columns: 1fr auto auto;
-      gap: 10px;
-      align-items: center;
-      padding: 10px 0;
-      border-bottom: 1px dashed var(--line);
-    }
-    .range-row:last-child { border-bottom: 0; }
-    .range-row .name { font-size: 14px; color: var(--ink); }
-    .range-row .name .unit { color: var(--muted); font-size: 12px; margin-left: 4px; }
-    .range-row input { width: 76px; padding: 6px 8px; text-align: right; }
-
-    .pickers {
-      display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 10px;
-      margin-top: 14px;
-    }
-    @media (max-width: 720px) {
-      .pickers { grid-template-columns: repeat(2, 1fr); }
-    }
 
     .results { display: flex; flex-direction: column; gap: 2px; }
     .track {
@@ -389,74 +245,22 @@
 
     .chips { display: flex; flex-wrap: wrap; gap: 8px; }
     .chip {
+      appearance: none;
       display: inline-flex;
-      align-items: baseline;
+      align-items: center;
       gap: 8px;
       padding: 7px 12px;
       background: var(--paper-2);
       border: 1px solid var(--line);
       border-radius: 999px;
+      font-family: inherit;
       font-size: 13px;
-      color: var(--ink);
+      color: var(--ink-2);
+      cursor: pointer;
+      transition: color 120ms, border-color 120ms, background 120ms;
     }
-    .chip .n { color: var(--muted); font-family: "JetBrains Mono", monospace; font-size: 11.5px; }
-
-    .stats {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 0;
-      border-top: 1px solid var(--line);
-      border-bottom: 1px solid var(--line);
-    }
-    @media (max-width: 720px) {
-      .stats { grid-template-columns: repeat(2, 1fr); }
-    }
-    .stat {
-      padding: 18px 18px 18px 0;
-      border-right: 1px solid var(--line);
-    }
-    .stat:last-child { border-right: 0; }
-    .stat .v {
-      font-family: "Geist", inherit;
-      font-size: 32px;
-      font-weight: 600;
-      letter-spacing: -0.025em;
-      color: var(--ink);
-    }
-    .stat .v .sub { font-family: "JetBrains Mono", monospace; font-size: 13px; font-weight: 400; color: var(--muted); margin-left: 4px; }
-    .stat .k {
-      font-size: 12px;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      color: var(--muted);
-      margin-top: 6px;
-    }
-
-    .artist-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-      gap: 18px;
-    }
-    .artist {
-      display: flex;
-      flex-direction: column;
-      align-items: flex-start;
-      gap: 10px;
-      text-decoration: none;
-      color: inherit;
-    }
-    .artist .a-img {
-      width: 100%;
-      aspect-ratio: 1;
-      border-radius: 999px;
-      object-fit: cover;
-      background: var(--paper-2);
-      border: 1px solid var(--line);
-      transition: transform 200ms ease;
-    }
-    .artist:hover .a-img { transform: scale(1.02); }
-    .artist .a-name { font-size: 14px; font-weight: 500; letter-spacing: -0.01em; }
-    .artist .a-rank { font-family: "JetBrains Mono", monospace; font-size: 11px; color: var(--muted); }
+    .chip:hover { color: var(--ink); border-color: var(--ink-2); }
+    .chip.active { background: var(--ink); color: var(--paper); border-color: var(--ink); }
 
     .empty, .info, .error {
       padding: 16px 4px;
@@ -470,185 +274,6 @@
       border-radius: 4px;
       font-size: 12.5px;
     }
-
-    .gate {
-      padding: 48px 32px;
-      border: 1px solid var(--line);
-      border-radius: var(--r-lg);
-      background: var(--paper-2);
-      text-align: left;
-      max-width: 560px;
-    }
-    .gate .gate-title {
-      font-family: "Geist", inherit;
-      font-size: 28px;
-      font-weight: 600;
-      letter-spacing: -0.025em;
-      margin: 0 0 8px;
-    }
-    .gate .gate-title em { font-family: "Instrument Serif", serif; font-style: italic; font-weight: 400; color: var(--accent); }
-    .gate .gate-sub { color: var(--muted); margin: 0 0 22px; }
-
-    .me {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      padding: 14px 0 22px;
-      border-bottom: 1px solid var(--line);
-      margin-bottom: 28px;
-    }
-    .me .avatar {
-      width: 52px; height: 52px;
-      border-radius: 999px;
-      object-fit: cover;
-      background: var(--paper-2);
-      border: 1px solid var(--line);
-    }
-    .me .name { font-weight: 600; font-size: 16px; letter-spacing: -0.01em; }
-    .me .sub { color: var(--muted); font-size: 13px; }
-
-    .pill-group {
-      display: inline-flex;
-      gap: 4px;
-      padding: 4px;
-      background: var(--paper-2);
-      border: 1px solid var(--line);
-      border-radius: 999px;
-    }
-    .pill {
-      appearance: none;
-      border: 0;
-      background: transparent;
-      color: var(--ink-2);
-      font-family: inherit;
-      font-size: 12.5px;
-      font-weight: 500;
-      padding: 6px 12px;
-      border-radius: 999px;
-      cursor: pointer;
-    }
-    .pill.active { background: var(--paper); color: var(--ink); box-shadow: var(--shadow); }
-
-    .subtabs {
-      display: flex;
-      gap: 24px;
-      border-bottom: 1px solid var(--line);
-      margin: 8px 0 24px;
-    }
-    .subtab {
-      appearance: none;
-      background: transparent;
-      border: 0;
-      color: var(--muted);
-      padding: 10px 0;
-      font-family: inherit;
-      font-size: 14px;
-      font-weight: 500;
-      cursor: pointer;
-      border-bottom: 2px solid transparent;
-      margin-bottom: -1px;
-    }
-    .subtab.active { color: var(--ink); border-bottom-color: var(--ink); }
-    .subtab:hover { color: var(--ink); }
-
-    .pl-row {
-      display: grid;
-      grid-template-columns: 44px minmax(0, 1fr) auto;
-      gap: 14px;
-      align-items: center;
-      padding: 12px 14px;
-      border: 1px solid var(--line);
-      border-radius: var(--r-md);
-      margin-bottom: 8px;
-      background: var(--paper);
-    }
-    .pl-row .pl-art {
-      width: 44px; height: 44px;
-      border-radius: 8px;
-      object-fit: cover;
-      background: var(--paper-2);
-      border: 1px solid var(--line);
-    }
-    .pl-row .pl-art-ph {
-      width: 44px; height: 44px;
-      border-radius: 8px;
-      border: 1px solid var(--line);
-      background-image: repeating-linear-gradient(
-        45deg,
-        var(--paper-2) 0 4px,
-        var(--paper) 4px 8px
-      );
-    }
-    .pl-row .body { min-width: 0; }
-    .pl-row .name {
-      font-size: 14px;
-      font-weight: 500;
-      letter-spacing: -0.01em;
-      color: var(--ink);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    .pl-row .meta {
-      color: var(--muted);
-      font-size: 12.5px;
-      margin-top: 1px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    .pl-row .pl-meta-line {
-      font-family: "JetBrains Mono", monospace;
-      font-size: 11.5px;
-      color: var(--ink-2);
-      margin-top: 3px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    .pl-vibe {
-      margin: -8px 0 10px;
-      padding: 10px 14px;
-      border: 1px dashed var(--line-2);
-      border-top: 0;
-      border-radius: 0 0 var(--r-md) var(--r-md);
-      background: var(--paper-2);
-      display: flex;
-      gap: 8px;
-      align-items: center;
-    }
-    .pl-vibe input[type="text"] {
-      flex: 1;
-      padding: 8px 11px;
-      font-size: 13.5px;
-    }
-    .pl-vibe button.primary { height: 36px; padding: 0 14px; font-size: 13px; }
-    .pl-vibe .hint {
-      font-family: "JetBrains Mono", monospace;
-      font-size: 11px;
-      color: var(--muted);
-    }
-
-    .pl-recs {
-      margin: 0 0 14px;
-      padding: 14px 16px 6px;
-      border: 1px dashed var(--line-2);
-      border-top: 0;
-      border-radius: 0 0 var(--r-md) var(--r-md);
-      background: var(--paper-2);
-      transform: translateY(-8px);
-    }
-    .pl-recs .recs-head {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 6px;
-      font-family: "JetBrains Mono", monospace;
-      font-size: 11.5px;
-      color: var(--muted);
-    }
-
-    .row-actions { display: flex; flex-direction: column; gap: 6px; align-items: stretch; }
 
     .skel {
       background: linear-gradient(90deg, var(--paper-2) 0%, var(--line) 50%, var(--paper-2) 100%);
@@ -668,6 +293,7 @@
       display: inline-flex;
       align-items: center;
       gap: 8px;
+      margin-bottom: 14px;
     }
     .demo-dot { width: 6px; height: 6px; border-radius: 999px; background: var(--accent); }
 
@@ -776,31 +402,20 @@
       { name: "Saada Bonaire", artists: ["Saada Bonaire"], album: "1992", popularity: 33, image: null, url: "#" },
     ];
     const DEMO_FEAT = [
-      { tempo: 92.4, key: 9,  mode: 1, energy: 0.42, danceability: 0.51, valence: 0.34, acousticness: 0.78 },
+      { tempo: 92.4,  key: 9, mode: 1, energy: 0.42, danceability: 0.51, valence: 0.34, acousticness: 0.78 },
       { tempo: 138.0, key: 5, mode: 0, energy: 0.18, danceability: 0.21, valence: 0.16, acousticness: 0.99 },
       { tempo: 110.5, key: 2, mode: 0, energy: 0.62, danceability: 0.59, valence: 0.41, acousticness: 0.07 },
       { tempo: 124.0, key: 7, mode: 1, energy: 0.81, danceability: 0.74, valence: 0.55, acousticness: 0.04 },
       { tempo: 76.2,  key: 4, mode: 1, energy: 0.22, danceability: 0.28, valence: 0.62, acousticness: 0.92 },
       { tempo: 118.0, key: 0, mode: 1, energy: 0.55, danceability: 0.66, valence: 0.71, acousticness: 0.31 },
     ];
-    const DEMO_ARTISTS = [
-      "Caribou","Fleet Foxes","Beach House","Floating Points","Khruangbin","Tame Impala","Mac DeMarco","Steve Reich"
-    ].map((name, i) => ({ name, image: null, url: "#", rank: i+1 }));
-    const DEMO_GENRES = [
-      ["ambient", 38], ["dream pop", 24], ["modern jazz", 19], ["indietronica", 17],
-      ["chillwave", 12], ["downtempo", 11], ["minimalism", 9], ["psych folk", 7],
-    ];
-    const DEMO_ANALYZE = {
-      stats: { avg_tempo: 108.4, avg_energy: 0.46, avg_danceability: 0.58, feature_total: 20, feature_coverage: 18 },
-      top_artists: DEMO_ARTISTS,
-      top_tracks: DEMO_TRACKS.map((t, i) => ({ ...t })),
-      top_genres: DEMO_GENRES,
-      recent: DEMO_TRACKS.slice().reverse(),
-    };
-    const DEMO_PLAYLISTS = [
-      { id: "p1", name: "Sunday morning, slow", owner: "you", image: null, url: "#" },
-      { id: "p2", name: "long drives / late may", owner: "you", image: null, url: "#" },
-      { id: "p3", name: "writing - no vocals", owner: "you", image: null, url: "#" },
+
+    const MOOD_PRESETS = [
+      { label: "Calm + sad",      v: 0.25, e: 0.20 },
+      { label: "Calm + happy",    v: 0.75, e: 0.25 },
+      { label: "Intense + sad",   v: 0.20, e: 0.80 },
+      { label: "Intense + happy", v: 0.80, e: 0.85 },
+      { label: "Center",          v: 0.50, e: 0.50 },
     ];
 
     async function safeFetch(url, opts) {
@@ -821,10 +436,6 @@
     }
 
     function App() {
-      const params = new URLSearchParams(window.location.search);
-      const tabParam = params.get("tab");
-      const initial = tabParam === "stats" ? "stats" : tabParam === "mood" ? "mood" : "mine";
-      const [tab, setTab] = useState(initial);
       const [theme, setTheme] = useState(() =>
         document.documentElement.getAttribute("data-theme") || "light"
       );
@@ -841,7 +452,7 @@
           <header className="topbar">
             <div className="brand">
               <div className="brand-mark" aria-hidden="true"></div>
-              <div>Tonecard <small>- vibe search & listening stats</small></div>
+              <div>Tonecard <small>- mood discovery</small></div>
             </div>
             <div className="spacer"></div>
             <button
@@ -863,34 +474,19 @@
                   </svg>
                 )}
             </button>
-            <nav className="tabs" role="tablist">
-              <button role="tab" aria-selected={tab==="mine"} className={`tab ${tab==="mine"?"active":""}`} onClick={() => setTab("mine")}>My Music</button>
-              <button role="tab" aria-selected={tab==="mood"} className={`tab ${tab==="mood"?"active":""}`} onClick={() => setTab("mood")}>Mood</button>
-              <button role="tab" aria-selected={tab==="stats"} className={`tab ${tab==="stats"?"active":""}`} onClick={() => setTab("stats")}>Stats</button>
-            </nav>
           </header>
 
-          {tab === "mine" && <MineTab />}
-          {tab === "mood" && <MoodTab />}
-          {tab === "stats" && <StatsTab />}
+          <MoodTab />
 
           <footer className="foot">
-            <div>Audio features via ReccoBeats. Catalog & playback by Spotify Web API.</div>
-            <div>Tonecard - local Flask - :5050</div>
+            <div>Audio features via ReccoBeats. Catalog by Spotify Web API.</div>
+            <div>Tonecard - open mood discovery</div>
           </footer>
         </div>
       );
     }
 
-    const MOOD_PRESETS = [
-      { label: "Calm + sad",      v: 0.25, e: 0.20 },
-      { label: "Calm + happy",    v: 0.75, e: 0.25 },
-      { label: "Intense + sad",   v: 0.20, e: 0.80 },
-      { label: "Intense + happy", v: 0.80, e: 0.85 },
-      { label: "Center",          v: 0.50, e: 0.50 },
-    ];
-
-    function MoodPlane({ history, point, onPick }) {
+    function MoodPlane({ points, point, onPick }) {
       const SIZE = 360;
 
       function handleClick(e) {
@@ -913,7 +509,7 @@
             <line x1={SIZE/2} y1="0" x2={SIZE/2} y2={SIZE} stroke="var(--line)" strokeDasharray="3 3" />
             <line x1="0" y1={SIZE/2} x2={SIZE} y2={SIZE/2} stroke="var(--line)" strokeDasharray="3 3" />
 
-            {(history || []).map((p, i) => (
+            {(points || []).map((p, i) => (
               <circle
                 key={p.id || i}
                 cx={p.valence * SIZE}
@@ -954,51 +550,33 @@
       );
     }
 
+    const DEMO_SEED = [
+      { id: "h1", name: "Avril 14th",        artists: ["Aphex Twin"],   valence: 0.18, energy: 0.18 },
+      { id: "h2", name: "An Ending (Ascent)",artists: ["Brian Eno"],    valence: 0.35, energy: 0.18 },
+      { id: "h3", name: "Cirrus",            artists: ["Bonobo"],       valence: 0.52, energy: 0.62 },
+      { id: "h4", name: "Open Eye Signal",   artists: ["Jon Hopkins"],  valence: 0.55, energy: 0.81 },
+      { id: "h5", name: "Ekstasis",          artists: ["J. Barwick"],   valence: 0.34, energy: 0.42 },
+      { id: "h6", name: "Saada Bonaire",     artists: ["Saada Bonaire"],valence: 0.71, energy: 0.55 },
+    ];
+
     function MoodTab() {
-      const [me, setMe] = useState(null);
-      const [meLoading, setMeLoading] = useState(true);
-      const [history, setHistory] = useState([]);
       const [point, setPoint] = useState(null);
+      const [seed, setSeed] = useState([]);
       const [results, setResults] = useState(null);
       const [loading, setLoading] = useState(false);
       const [error, setError] = useState(null);
       const [demoMode, setDemoMode] = useState(false);
-      const [authError] = useState(() => new URLSearchParams(window.location.search).get("auth_error"));
 
-      const DEMO_HISTORY = [
-        { id: "h1", name: "Avril 14th",        artists: ["Aphex Twin"],   valence: 0.18, energy: 0.18 },
-        { id: "h2", name: "An Ending (Ascent)",artists: ["Brian Eno"],    valence: 0.35, energy: 0.18 },
-        { id: "h3", name: "Cirrus",            artists: ["Bonobo"],       valence: 0.52, energy: 0.62 },
-        { id: "h4", name: "Open Eye Signal",   artists: ["Jon Hopkins"],  valence: 0.55, energy: 0.81 },
-        { id: "h5", name: "Ekstasis",          artists: ["J. Barwick"],   valence: 0.34, energy: 0.42 },
-        { id: "h6", name: "Saada Bonaire",     artists: ["Saada Bonaire"],valence: 0.71, energy: 0.55 },
-      ];
-
-      async function loadMe() {
-        setMeLoading(true);
-        try {
-          const j = await safeFetch("/api/me");
-          setMe(j);
-        } catch (err) {
-          if (err.demo) {
-            setMe({ authenticated: true, display_name: "Riley - demo", country: "US", image: null, url: "#" });
-            setDemoMode(true);
-          } else {
-            setMe({ authenticated: false });
+      useEffect(() => {
+        (async () => {
+          try {
+            const j = await safeFetch("/api/mood/seed");
+            setSeed(j.points || []);
+          } catch (err) {
+            if (err.demo) { setSeed(DEMO_SEED); setDemoMode(true); }
           }
-        } finally { setMeLoading(false); }
-      }
-
-      async function loadHistory() {
-        try {
-          const j = await safeFetch("/api/mood/history");
-          setHistory(j.points || []);
-        } catch (err) {
-          if (err.demo) { setHistory(DEMO_HISTORY); setDemoMode(true); }
-          else if (err.status === 401) { setMe({ authenticated: false }); }
-          else setError(err.message || "Failed to load history.");
-        }
-      }
+        })();
+      }, []);
 
       async function searchAt(p) {
         setPoint(p);
@@ -1006,6 +584,7 @@
         try {
           const j = await safeFetch(`/api/mood?valence=${p.valence.toFixed(3)}&energy=${p.energy.toFixed(3)}&count=10`);
           setResults(j);
+          setDemoMode(false);
         } catch (err) {
           if (err.demo) {
             setResults({
@@ -1016,43 +595,14 @@
               })),
               candidate_count: 5,
             });
-          } else if (err.status === 401) {
-            setMe({ authenticated: false });
+            setDemoMode(true);
           } else {
             setError(err.message || "Search failed.");
           }
         } finally { setLoading(false); }
       }
 
-      useEffect(() => { loadMe(); }, []);
-      useEffect(() => { if (me && me.authenticated) loadHistory(); }, [me && me.authenticated]);
-
-      if (meLoading) return (
-        <section>
-          <div className="hero">
-            <div className="eyebrow">Mood</div>
-            <h1 className="display">Loading your <em>mood map</em>...</h1>
-          </div>
-        </section>
-      );
-
-      if (!me || !me.authenticated) {
-        return (
-          <section>
-            <div className="hero">
-              <div className="eyebrow">Mood - OAuth</div>
-              <h1 className="display">Click anywhere to find tracks at that <em>mood</em>.</h1>
-              <p className="lede">A 2D plane of valence (sad to happy) and energy (calm to intense). We plot your top tracks as dots so you can see which corners you live in, then surface new tracks near wherever you click.</p>
-            </div>
-            <div className="gate">
-              <div className="gate-title">Connect <em>Spotify</em></div>
-              <div className="gate-sub">Read-only scopes: top read - recently-played - library read - profile.</div>
-              {authError && <div className="error" style={{padding: "8px 0"}}>Auth error: {authError}</div>}
-              <a href="/login" className="primary">Connect Spotify -&gt;</a>
-            </div>
-          </section>
-        );
-      }
+      const planePoints = seed;
 
       const coordText = point
         ? <span>Picked <b>valence {point.valence.toFixed(2)}</b> - <b>energy {point.energy.toFixed(2)}</b></span>
@@ -1063,11 +613,13 @@
           <div className="hero">
             <div className="eyebrow">Mood</div>
             <h1 className="display">Pick a <em>mood</em>, find tracks.</h1>
-            <p className="lede">Click anywhere on the plane. Dim dots are your top tracks - ranked by ReccoBeats audio features. Results below are tracks closest to your point in (valence, energy) space.</p>
+            <p className="lede">A 2D plane of valence (sad to happy) and energy (calm to intense). Click anywhere - we surface tracks closest to your point in (valence, energy) space, ranked by ReccoBeats audio features.</p>
           </div>
 
+          {demoMode && <div className="demo-banner"><span className="demo-dot" /> demo data - backend unreachable</div>}
+
           <div className="mood-wrap">
-            <MoodPlane history={history} point={point} onPick={searchAt} />
+            <MoodPlane points={planePoints} point={point} onPick={searchAt} />
             <div className="mood-side">
               <div className="mood-coord">{coordText}</div>
               <div className="mood-presets">
@@ -1077,9 +629,11 @@
                   </button>
                 ))}
               </div>
-              <div className="info" style={{padding: 0, fontSize: 12.5}}>
-                History: <span className="mono">{history.length}</span> track{history.length === 1 ? "" : "s"} plotted{demoMode ? " - demo data" : ""}.
-              </div>
+              {results && (
+                <div className="info" style={{padding: 0, fontSize: 12.5}}>
+                  Showing <span className="mono">{(results.recommendations || []).length}</span> nearby tracks of <span className="mono">{results.candidate_count || 0}</span> candidates.
+                </div>
+              )}
             </div>
           </div>
 
@@ -1098,501 +652,6 @@
             </>
           )}
         </section>
-      );
-    }
-
-    function StatsTab() {
-      const [me, setMe] = useState(null);
-      const [meLoading, setMeLoading] = useState(true);
-      const [data, setData] = useState(null);
-      const [loading, setLoading] = useState(false);
-      const [error, setError] = useState(null);
-      const [timeRange, setTimeRange] = useState("medium_term");
-      const [demoMode, setDemoMode] = useState(false);
-      const [authError] = useState(() => new URLSearchParams(window.location.search).get("auth_error"));
-
-      async function loadMe() {
-        setMeLoading(true);
-        try {
-          const j = await safeFetch("/api/me");
-          setMe(j);
-        } catch (err) {
-          if (err.demo) {
-            setMe({ authenticated: true, display_name: "Riley - demo", country: "US", image: null, url: "#" });
-            setDemoMode(true);
-          } else {
-            setMe({ authenticated: false });
-          }
-        } finally { setMeLoading(false); }
-      }
-
-      async function loadAnalyze(range) {
-        setLoading(true); setError(null);
-        try {
-          const j = await safeFetch(`/api/analyze?time_range=${range}`);
-          setData(j);
-        } catch (err) {
-          if (err.demo) { setData(DEMO_ANALYZE); setDemoMode(true); }
-          else if (err.status === 401) { setMe({ authenticated: false }); setData(null); }
-          else setError(err.message);
-        } finally { setLoading(false); }
-      }
-
-      useEffect(() => { loadMe(); }, []);
-      useEffect(() => { if (me && me.authenticated) loadAnalyze(timeRange); }, [me && me.authenticated, timeRange]);
-
-      async function logout() {
-        try { await fetch("/logout", { method: "POST" }); } catch {}
-        setMe({ authenticated: false });
-        setData(null);
-      }
-
-      if (meLoading) return (
-        <section>
-          <div className="hero">
-            <div className="eyebrow">Stats</div>
-            <h1 className="display">Loading your <em>rankings</em>...</h1>
-          </div>
-          <SkeletonList n={4} />
-        </section>
-      );
-
-      if (!me || !me.authenticated) {
-        return (
-          <section>
-            <div className="hero">
-              <div className="eyebrow">Stats - OAuth</div>
-              <h1 className="display">Connect to see your <em>artist + song rankings</em>.</h1>
-              <p className="lede">View top artists and top songs by time range, plus listening-shape summary stats.</p>
-            </div>
-
-            <div className="gate">
-              <div className="gate-title">Connect <em>Spotify</em></div>
-              <div className="gate-sub">Read-only scopes: top read - recently-played - library read - profile.</div>
-              {authError && <div className="error" style={{padding: "8px 0"}}>Auth error: {authError}</div>}
-              <a href="/login" className="primary">Connect Spotify -&gt;</a>
-            </div>
-          </section>
-        );
-      }
-
-      const rangeLabel = {
-        short_term: "Last 4 weeks",
-        medium_term: "Last 6 months",
-        long_term: "All time",
-      };
-
-      return (
-        <section>
-          <div className="me">
-            {me.image
-              ? <img src={me.image} alt="" className="avatar" />
-              : <div className="avatar" />}
-            <div>
-              <div className="name">{me.display_name}</div>
-              <div className="sub">{me.country || ""}{demoMode ? " - demo data" : ""}</div>
-            </div>
-            <div className="spacer" />
-            <button className="ghost" onClick={logout}>Disconnect</button>
-          </div>
-          <StatsView
-            data={data}
-            loading={loading}
-            error={error}
-            timeRange={timeRange}
-            setTimeRange={setTimeRange}
-            rangeLabel={rangeLabel}
-          />
-        </section>
-      );
-    }
-
-    function MineTab() {
-      const [me, setMe] = useState(null);
-      const [meLoading, setMeLoading] = useState(true);
-      const [recentData, setRecentData] = useState(null);
-      const [demoMode, setDemoMode] = useState(false);
-      const [authError] = useState(() => new URLSearchParams(window.location.search).get("auth_error"));
-      const [playlists, setPlaylists] = useState([]);
-      const [playlistStats, setPlaylistStats] = useState({});
-      const [playlistLoadingId, setPlaylistLoadingId] = useState(null);
-      const [playlistRecs, setPlaylistRecs] = useState({});
-      const [playlistRecsLoadingId, setPlaylistRecsLoadingId] = useState(null);
-      const [vibeInputs, setVibeInputs] = useState({});
-      const [vibeRecs, setVibeRecs] = useState({});
-      const [vibeLoadingId, setVibeLoadingId] = useState(null);
-      const [vibeErrors, setVibeErrors] = useState({});
-
-      async function loadMe() {
-        setMeLoading(true);
-        try {
-          const j = await safeFetch("/api/me");
-          setMe(j);
-        } catch (err) {
-          if (err.demo) {
-            setMe({ authenticated: true, display_name: "Riley - demo", country: "US", image: null, url: "#" });
-            setDemoMode(true);
-          } else {
-            setMe({ authenticated: false });
-          }
-        } finally { setMeLoading(false); }
-      }
-
-      async function loadRecent() {
-        try {
-          const j = await safeFetch("/api/analyze?time_range=medium_term");
-          setRecentData(j);
-        } catch (err) {
-          if (err.demo) { setRecentData(DEMO_ANALYZE); setDemoMode(true); }
-          else if (err.status === 401) { setMe({ authenticated: false }); setRecentData(null); }
-        }
-      }
-
-      async function loadPlaylists() {
-        try {
-          const j = await safeFetch("/api/playlists");
-          setPlaylists(j.playlists || []);
-        } catch (err) {
-          if (err.demo) setPlaylists(DEMO_PLAYLISTS);
-        }
-      }
-
-      async function analyzePlaylist(id) {
-        setPlaylistLoadingId(id);
-        try {
-          const j = await safeFetch(`/api/playlists/${id}/stats`);
-          setPlaylistStats(s => ({ ...s, [id]: j }));
-        } catch (err) {
-          if (err.demo) {
-            setPlaylistStats(s => ({ ...s, [id]: {
-              track_count: 42, max_tracks: 100, feature_coverage: 38,
-              stats: { avg_tempo: 102.1, avg_energy: 0.41, avg_danceability: 0.55 }
-            }}));
-          }
-        } finally { setPlaylistLoadingId(null); }
-      }
-
-      async function findSimilar(id) {
-        setPlaylistRecsLoadingId(id);
-        try {
-          const j = await safeFetch(`/api/playlists/${id}/recommendations?count=10`);
-          setPlaylistRecs(r => ({ ...r, [id]: j }));
-        } catch (err) {
-          if (err.demo) {
-            setPlaylistRecs(r => ({ ...r, [id]: {
-              playlist_stats: { avg_tempo: 102.1, avg_energy: 0.41, avg_danceability: 0.55 },
-              recommendations: DEMO_TRACKS.slice(0,5).map((t, i) => ({ ...t, id: "r"+i, features: DEMO_FEAT[i] })),
-            }}));
-          }
-        } finally { setPlaylistRecsLoadingId(null); }
-      }
-
-      function toggleVibe(id) {
-        setVibeInputs(v => {
-          if (id in v) { const { [id]: _, ...rest } = v; return rest; }
-          return { ...v, [id]: "" };
-        });
-      }
-
-      function setVibeText(id, value) {
-        setVibeInputs(v => ({ ...v, [id]: value }));
-      }
-
-      async function searchByVibe(id) {
-        const vibe = (vibeInputs[id] || "").trim();
-        if (!vibe) return;
-        setVibeLoadingId(id);
-        setVibeErrors(e => { const { [id]: _, ...rest } = e; return rest; });
-        try {
-          const j = await safeFetch(`/api/playlists/${id}/vibe?vibe=${encodeURIComponent(vibe)}&count=10`);
-          setVibeRecs(r => ({ ...r, [id]: j }));
-        } catch (err) {
-          if (err.demo) {
-            setVibeRecs(r => ({ ...r, [id]: {
-              vibe,
-              playlist_stats: { avg_tempo: 102.1, avg_energy: 0.41, avg_danceability: 0.55 },
-              recommendations: DEMO_TRACKS.slice(0,5).map((t, i) => ({ ...t, id: "v"+i, features: DEMO_FEAT[i] })),
-            }}));
-          } else if (err.status === 401) {
-            setVibeErrors(e => ({ ...e, [id]: "Session expired. Reconnect Spotify and try again." }));
-          } else {
-            setVibeErrors(e => ({ ...e, [id]: err.message || "Search failed." }));
-          }
-        } finally { setVibeLoadingId(null); }
-      }
-
-      useEffect(() => { loadMe(); }, []);
-      useEffect(() => { if (me && me.authenticated) loadPlaylists(); }, [me && me.authenticated]);
-      useEffect(() => { if (me && me.authenticated) loadRecent(); }, [me && me.authenticated]);
-
-      async function logout() {
-        try { await fetch("/logout", { method: "POST" }); } catch {}
-        setMe({ authenticated: false }); setRecentData(null); setPlaylists([]);
-        setPlaylistStats({}); setPlaylistRecs({});
-        setVibeInputs({}); setVibeRecs({});
-      }
-
-      if (meLoading) return (
-        <section>
-          <div className="hero">
-            <div className="eyebrow">My Music</div>
-            <h1 className="display">Loading your <em>listening shape</em>...</h1>
-          </div>
-          <SkeletonList n={4} />
-        </section>
-      );
-
-      if (!me || !me.authenticated) {
-        return (
-          <section>
-            <div className="hero">
-              <div className="eyebrow">My Music - OAuth</div>
-              <h1 className="display">Connect to see your <em>listening shape</em>.</h1>
-              <p className="lede">Top tracks, top artists, genre distribution, recent plays - and per-playlist BPM/energy/dance averages.</p>
-            </div>
-
-            <div className="gate">
-              <div className="gate-title">Connect <em>Spotify</em></div>
-              <div className="gate-sub">Read-only scopes: top read - recently-played - library read - profile.</div>
-              {authError && <div className="error" style={{padding: "8px 0"}}>Auth error: {authError}</div>}
-              <a href="/login" className="primary">Connect Spotify -&gt;</a>
-              <div className="info" style={{marginTop: 18, padding: 0}}>
-                In your Spotify dev dashboard, add <code>http://127.0.0.1:5050/callback</code> as a redirect URI.
-              </div>
-            </div>
-          </section>
-        );
-      }
-
-      return (
-        <section>
-          <div className="me">
-            {me.image
-              ? <img src={me.image} alt="" className="avatar" />
-              : <div className="avatar" />}
-            <div>
-              <div className="name">{me.display_name}</div>
-              <div className="sub">{me.country || ""}{demoMode ? " - demo data" : ""}</div>
-            </div>
-            <div className="spacer" />
-            <button className="ghost" onClick={logout}>Disconnect</button>
-          </div>
-          <LibraryView
-            playlists={playlists}
-            playlistStats={playlistStats}
-            playlistLoadingId={playlistLoadingId}
-            playlistRecs={playlistRecs}
-            playlistRecsLoadingId={playlistRecsLoadingId}
-            analyzePlaylist={analyzePlaylist}
-            findSimilar={findSimilar}
-            vibeInputs={vibeInputs}
-            vibeRecs={vibeRecs}
-            vibeLoadingId={vibeLoadingId}
-            vibeErrors={vibeErrors}
-            toggleVibe={toggleVibe}
-            setVibeText={setVibeText}
-            searchByVibe={searchByVibe}
-            data={recentData}
-          />
-        </section>
-      );
-    }
-
-    function StatsView({ data, loading, error, timeRange, setTimeRange, rangeLabel }) {
-      return (
-        <div>
-          <div style={{display: "flex", alignItems: "center", gap: 12, marginBottom: 22}}>
-            <div className="eyebrow" style={{margin: 0}}>Time range</div>
-            <div className="pill-group">
-              {[["short_term","4w"],["medium_term","6m"],["long_term","all"]].map(([v,l]) => (
-                <button key={v} className={`pill ${timeRange===v?"active":""}`} onClick={()=>setTimeRange(v)}>{l}</button>
-              ))}
-            </div>
-            <div className="spacer" />
-            <div className="info mono" style={{padding: 0, fontSize: 11.5}}>{rangeLabel[timeRange]}</div>
-          </div>
-
-          {error && <div className="error">{error}</div>}
-          {loading && <SkeletonList n={4} />}
-
-          {!loading && data && (
-            <>
-              <div className="stats">
-                <Stat v={data.stats.avg_tempo ?? "-"} sub="BPM"  k="Avg tempo" />
-                <Stat v={data.stats.avg_energy ?? "-"}        k="Avg energy" />
-                <Stat v={data.stats.avg_danceability ?? "-"}  k="Avg dance" />
-                <Stat v={`${data.stats.feature_coverage ?? 0}/${data.stats.feature_total ?? 0}`} k="Features known" />
-              </div>
-
-              {data.top_genres && data.top_genres.length > 0 && (
-                <>
-                  <h2>Genres <span className="count">- top {data.top_genres.length}</span></h2>
-                  <div className="chips">
-                    {data.top_genres.map(([g, n]) => (
-                      <span className="chip" key={g}>{g}<span className="n">{n}</span></span>
-                    ))}
-                  </div>
-                </>
-              )}
-
-              <h2>Top artists</h2>
-              {data.top_artists.length === 0
-                ? <div className="empty">No top artists yet.</div>
-                : (
-                  <div className="artist-grid">
-                    {data.top_artists.slice(0, 12).map((a, i) => (
-                      <a key={(a.url||"")+i} href={a.url || "#"} target="_blank" rel="noreferrer" className="artist">
-                        {a.image
-                          ? <img src={a.image} alt="" className="a-img" />
-                          : <div className="a-img" />}
-                        <div>
-                          <div className="a-rank">#{String(i+1).padStart(2,"0")}</div>
-                          <div className="a-name">{a.name}</div>
-                        </div>
-                      </a>
-                    ))}
-                  </div>
-                )}
-
-              <h2>Top tracks</h2>
-              {data.top_tracks.length === 0
-                ? <div className="empty">No top tracks yet.</div>
-                : (
-                  <div className="results">
-                    {data.top_tracks.map((t, i) => <TrackRow key={(t.url||"")+i} t={t} i={i} />)}
-                  </div>
-                )}
-            </>
-          )}
-        </div>
-      );
-    }
-
-    function LibraryView({ playlists, playlistStats, playlistLoadingId, playlistRecs, playlistRecsLoadingId, analyzePlaylist, findSimilar, vibeInputs, vibeRecs, vibeLoadingId, vibeErrors, toggleVibe, setVibeText, searchByVibe, data }) {
-      return (
-        <div>
-          <h2>Your playlists <span className="count">- {playlists.length}</span></h2>
-          {playlists.length === 0 && <div className="empty">No playlists.</div>}
-
-          {playlists.map(p => {
-            const s = playlistStats[p.id];
-            const recs = playlistRecs[p.id];
-            const recsLoading = playlistRecsLoadingId === p.id;
-            const vibeOpen = p.id in vibeInputs;
-            const vibeVal = vibeInputs[p.id] || "";
-            const vRecs = vibeRecs[p.id];
-            const vibeLoading = vibeLoadingId === p.id;
-            const vibeErr = vibeErrors && vibeErrors[p.id];
-            return (
-              <div key={p.id}>
-                <div className="pl-row">
-                  {p.image ? <img src={p.image} alt="" className="pl-art" /> : <div className="pl-art-ph" />}
-                  <div className="body">
-                    <div className="name">{p.name}</div>
-                    <div className="meta">{p.owner}</div>
-                    {s && (
-                      s.track_count === 0
-                        ? <div className="meta mono" style={{fontSize: 11.5, color: "var(--muted)"}}>Empty playlist.</div>
-                        : <div className="pl-meta-line">
-                            {s.stats.avg_tempo ?? "-"} BPM - energy {s.stats.avg_energy ?? "-"} - dance {s.stats.avg_danceability ?? "-"}
-                            <span style={{opacity: 0.6}}> ({s.feature_coverage}/{s.track_count}{s.track_count >= s.max_tracks ? `, capped ${s.max_tracks}` : ""})</span>
-                          </div>
-                    )}
-                  </div>
-                  <div className="row-actions">
-                    {!s && (
-                      <button className="ghost" onClick={() => analyzePlaylist(p.id)} disabled={playlistLoadingId === p.id}>
-                        {playlistLoadingId === p.id ? "Analyzing..." : "Analyze"}
-                      </button>
-                    )}
-                    {s && s.track_count > 0 && !recs && (
-                      <button className="ghost" onClick={() => findSimilar(p.id)} disabled={recsLoading}>
-                        {recsLoading ? "Finding..." : "Find similar"}
-                      </button>
-                    )}
-                    <button className="ghost" onClick={() => toggleVibe(p.id)}>
-                      {vibeOpen ? "Close vibe" : "By vibe"}
-                    </button>
-                    {p.url && <a className="open" href={p.url} target="_blank" rel="noreferrer">Open ↗</a>}
-                  </div>
-                </div>
-
-                {vibeOpen && (
-                  <>
-                    <div className="pl-vibe">
-                      <input
-                        type="text"
-                        value={vibeVal}
-                        placeholder="trap, spanish reggaeton, lofi study..."
-                        onChange={e => setVibeText(p.id, e.target.value)}
-                        onKeyDown={e => { if (e.key === "Enter") searchByVibe(p.id); }}
-                      />
-                      <button
-                        className="primary"
-                        onClick={() => searchByVibe(p.id)}
-                        disabled={vibeLoading || !vibeVal.trim()}
-                      >
-                        {vibeLoading ? "Searching..." : "Search"}
-                      </button>
-                    </div>
-                    {vibeErr && <div className="error" style={{padding: "0 14px 10px", fontSize: 13}}>Vibe search failed: {vibeErr}</div>}
-                  </>
-                )}
-
-                {recs && (
-                  <div className="pl-recs">
-                    <div className="recs-head">
-                      <span>Similar - target {recs.playlist_stats?.avg_tempo ?? "-"} BPM - energy {recs.playlist_stats?.avg_energy ?? "-"} - dance {recs.playlist_stats?.avg_danceability ?? "-"}</span>
-                      <button className="ghost" onClick={() => findSimilar(p.id)} disabled={recsLoading} style={{padding: "4px 10px", fontSize: 12}}>
-                        {recsLoading ? "Rolling..." : "Re-roll"}
-                      </button>
-                    </div>
-                    {recs.recommendations.length === 0
-                      ? <div className="empty">No similar tracks found.</div>
-                      : (
-                        <div className="results">
-                          {recs.recommendations.map((r, i) => (
-                            <TrackRow key={r.id || i} t={r} i={i} showFeatures />
-                          ))}
-                        </div>
-                      )}
-                  </div>
-                )}
-
-                {vRecs && (
-                  <div className="pl-recs">
-                    <div className="recs-head">
-                      <span>Vibe "{vRecs.vibe}" - target {vRecs.playlist_stats?.avg_tempo ?? "-"} BPM - energy {vRecs.playlist_stats?.avg_energy ?? "-"} - dance {vRecs.playlist_stats?.avg_danceability ?? "-"}</span>
-                      <button className="ghost" onClick={() => searchByVibe(p.id)} disabled={vibeLoading} style={{padding: "4px 10px", fontSize: 12}}>
-                        {vibeLoading ? "Searching..." : "Re-search"}
-                      </button>
-                    </div>
-                    {vRecs.recommendations.length === 0
-                      ? <div className="empty">No matching tracks found for that vibe.</div>
-                      : (
-                        <div className="results">
-                          {vRecs.recommendations.map((r, i) => (
-                            <TrackRow key={r.id || i} t={r} i={i} showFeatures />
-                          ))}
-                        </div>
-                      )}
-                  </div>
-                )}
-              </div>
-            );
-          })}
-
-          <h2>Recently played</h2>
-          {!data
-            ? <SkeletonList n={4} />
-            : data.recent.length === 0
-            ? <div className="empty">Nothing recent.</div>
-            : (
-              <div className="results">
-                {data.recent.map((t, i) => <TrackRow key={(t.url||"")+i} t={t} i={i} />)}
-              </div>
-            )}
-        </div>
       );
     }
 
@@ -1625,15 +684,6 @@
             )}
           </div>
           {t.url && <a className="open" href={t.url} target="_blank" rel="noreferrer">Open ↗</a>}
-        </div>
-      );
-    }
-
-    function Stat({ v, sub, k }) {
-      return (
-        <div className="stat">
-          <div className="v">{v}{sub && <span className="sub">{sub}</span>}</div>
-          <div className="k">{k}</div>
         </div>
       );
     }
