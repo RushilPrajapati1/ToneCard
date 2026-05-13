@@ -7,7 +7,7 @@
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,600;12..96,700&family=JetBrains+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet" />
 
   <script>
     (function() {
@@ -33,9 +33,9 @@
       --muted: oklch(0.55 0.012 80);
       --line: oklch(0.905 0.006 85);
       --line-2: oklch(0.86 0.008 85);
-      --accent: oklch(0.62 0.19 28);
-      --accent-soft: oklch(0.94 0.04 28);
-      --accent-ink: oklch(0.4 0.12 28);
+      --accent: oklch(0.60 0.22 30);
+      --accent-soft: oklch(0.94 0.05 30);
+      --accent-ink: oklch(0.38 0.14 30);
       --focus-ring: oklch(0.18 0.01 80 / 0.10);
       --shadow: 0 1px 0 oklch(0.85 0.01 80 / 0.5), 0 8px 24px -12px oklch(0.2 0.02 80 / 0.18);
       --r-sm: 8px;
@@ -52,9 +52,9 @@
       --muted: oklch(0.64 0.012 85);
       --line: oklch(0.30 0.009 260);
       --line-2: oklch(0.38 0.010 260);
-      --accent: oklch(0.74 0.17 28);
-      --accent-soft: oklch(0.32 0.08 28);
-      --accent-ink: oklch(0.86 0.16 28);
+      --accent: oklch(0.72 0.20 30);
+      --accent-soft: oklch(0.30 0.09 30);
+      --accent-ink: oklch(0.88 0.17 30);
       --focus-ring: oklch(0.96 0.005 85 / 0.18);
       --shadow: 0 1px 0 oklch(0.10 0.01 260 / 0.6), 0 8px 24px -12px oklch(0.04 0.01 260 / 0.6);
       color-scheme: dark;
@@ -62,7 +62,7 @@
     * { box-sizing: border-box; }
     html, body { margin: 0; padding: 0; }
     body {
-      font-family: "Geist", -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+      font-family: "Bricolage Grotesque", -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
       background: var(--paper);
       color: var(--ink);
       font-size: 15px;
@@ -72,6 +72,16 @@
     }
     .mono { font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace; font-feature-settings: "tnum", "ss01"; }
     .serif { font-family: "Instrument Serif", "Times New Roman", serif; font-style: italic; font-weight: 400; letter-spacing: -0.01em; }
+
+    .sr-only {
+      position: absolute;
+      width: 1px; height: 1px;
+      padding: 0; margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
 
     .shell {
       max-width: 1180px;
@@ -103,18 +113,13 @@
       height: 28px;
       border-radius: 8px;
       background: var(--ink);
-      position: relative;
-      display: grid;
-      place-items: center;
+      color: var(--paper);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 5px;
+      flex-shrink: 0;
     }
-    .brand-mark::before, .brand-mark::after {
-      content: "";
-      position: absolute;
-      background: var(--paper);
-    }
-    .brand-mark::before { width: 3px; height: 14px; border-radius: 2px; transform: translateX(-4px); }
-    .brand-mark::after { width: 3px; height: 8px; border-radius: 2px; transform: translateX(4px); }
-
     .brand small { color: var(--muted); font-weight: 400; font-size: 13px; margin-left: 2px; }
 
     .spacer { flex: 1; }
@@ -133,6 +138,7 @@
       transition: color 120ms ease, border-color 120ms ease, background 120ms ease;
     }
     .theme-toggle:hover { color: var(--ink); border-color: var(--ink-2); }
+    .theme-toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
     .theme-toggle svg { width: 16px; height: 16px; display: block; }
 
     .hero { margin-bottom: 28px; }
@@ -144,9 +150,9 @@
       margin-bottom: 10px;
     }
     h1.display {
-      font-family: "Geist", inherit;
-      font-weight: 600;
-      letter-spacing: -0.035em;
+      font-family: "Bricolage Grotesque", inherit;
+      font-weight: 700;
+      letter-spacing: -0.04em;
       font-size: clamp(36px, 5vw, 56px);
       line-height: 1.02;
       margin: 0 0 10px;
@@ -181,7 +187,8 @@
     .track .idx {
       font-family: "JetBrains Mono", monospace;
       font-size: 12px;
-      color: var(--muted);
+      color: var(--accent);
+      opacity: 0.7;
       text-align: right;
       letter-spacing: 0;
     }
@@ -204,7 +211,7 @@
     }
     .track .body { min-width: 0; }
     .track .name {
-      font-size: 15.5px;
+      font-size: 16px;
       font-weight: 500;
       letter-spacing: -0.012em;
       white-space: nowrap;
@@ -213,16 +220,17 @@
     }
     .track .meta {
       color: var(--muted);
-      font-size: 13.5px;
+      font-size: 14px;
       margin-top: 1px;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
     }
+    .track .album { color: var(--muted); }
     .track .features {
       margin-top: 4px;
       font-family: "JetBrains Mono", monospace;
-      font-size: 11.5px;
+      font-size: 12px;
       color: var(--ink-2);
       letter-spacing: 0;
       display: flex;
@@ -242,6 +250,7 @@
       white-space: nowrap;
     }
     .track .open:hover { color: var(--ink); border-color: var(--line-2); }
+    .track .open:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
     .chips { display: flex; flex-wrap: wrap; gap: 8px; }
     .chip {
@@ -260,7 +269,8 @@
       transition: color 120ms, border-color 120ms, background 120ms;
     }
     .chip:hover { color: var(--ink); border-color: var(--ink-2); }
-    .chip.active { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+    .chip:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    .chip.active { background: var(--accent); color: var(--paper); border-color: var(--accent); }
 
     .empty, .info, .error {
       padding: 16px 4px;
@@ -272,8 +282,33 @@
       background: var(--paper-2);
       padding: 1px 6px;
       border-radius: 4px;
-      font-size: 12.5px;
+      font-size: 13px;
     }
+    .info--compact { padding: 0; color: var(--muted); font-size: 13px; }
+    .empty-presets { margin-top: 12px; display: flex; flex-wrap: wrap; gap: 6px; }
+
+    .error-wrap {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 16px 4px;
+      flex-wrap: wrap;
+    }
+    .error-msg { color: var(--accent); font-size: 14px; }
+    .error-retry {
+      appearance: none;
+      background: transparent;
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      font-family: inherit;
+      font-size: 13px;
+      padding: 4px 10px;
+      border-radius: var(--r-sm);
+      cursor: pointer;
+      transition: background 120ms, color 120ms;
+    }
+    .error-retry:hover { background: var(--accent); color: var(--paper); }
+    .error-retry:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
     .skel {
       background: linear-gradient(90deg, var(--paper-2) 0%, var(--line) 50%, var(--paper-2) 100%);
@@ -282,20 +317,25 @@
       border-radius: 6px;
     }
     @keyframes shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+    @media (prefers-reduced-motion: reduce) {
+      .skel { animation: none; }
+      .track, .chip, .mood-preset, .theme-toggle, .track .open, .error-retry { transition: none; }
+    }
 
     .demo-banner {
       font-family: "JetBrains Mono", monospace;
-      font-size: 11.5px;
-      padding: 6px 12px;
+      font-size: 12px;
+      padding: 8px 16px;
       background: var(--accent-soft);
       color: var(--accent-ink);
-      border-radius: 999px;
+      border: 1px solid var(--accent);
+      border-radius: var(--r-sm);
       display: inline-flex;
       align-items: center;
       gap: 8px;
       margin-bottom: 14px;
     }
-    .demo-dot { width: 6px; height: 6px; border-radius: 999px; background: var(--accent); }
+    .demo-dot { width: 6px; height: 6px; border-radius: 999px; background: var(--accent); flex-shrink: 0; }
 
     .mood-wrap {
       display: grid;
@@ -314,7 +354,9 @@
       max-width: 420px;
       border: 1px solid var(--line);
       border-radius: var(--r-md);
-      background: var(--paper-2);
+      background:
+        radial-gradient(circle, var(--line) 1px, transparent 1px) 0 0 / 24px 24px,
+        var(--paper-2);
       padding: 28px;
       box-sizing: border-box;
     }
@@ -324,10 +366,15 @@
       cursor: crosshair;
       user-select: none;
     }
+    .mood-plane svg:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 3px;
+      border-radius: calc(var(--r-md) - 4px);
+    }
     .mood-axis-label {
       position: absolute;
       font-family: "JetBrains Mono", monospace;
-      font-size: 10.5px;
+      font-size: 10px;
       letter-spacing: 0.06em;
       text-transform: uppercase;
       color: var(--muted);
@@ -338,6 +385,21 @@
     .mood-axis-label.left   { left: 8px;   top: 50%;  transform: translateY(-50%) rotate(-90deg); transform-origin: left center; }
     .mood-axis-label.right  { right: 8px;  top: 50%;  transform: translateY(-50%) rotate(90deg);  transform-origin: right center; }
 
+    .plane-wrap { position: relative; }
+    .seed-overlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--paper-2);
+      border-radius: var(--r-md);
+      opacity: 0.9;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
     .mood-side {
       display: flex;
       flex-direction: column;
@@ -346,7 +408,7 @@
     }
     .mood-coord {
       font-family: "JetBrains Mono", monospace;
-      font-size: 12.5px;
+      font-size: 13px;
       color: var(--ink-2);
     }
     .mood-coord b { color: var(--ink); font-weight: 500; }
@@ -364,13 +426,24 @@
       transition: color 120ms, border-color 120ms;
     }
     .mood-preset:hover { color: var(--ink); border-color: var(--ink-2); }
+    .mood-preset:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+    .genre-section { margin-bottom: 20px; }
+    .genre-label {
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 8px;
+      font-weight: 600;
+    }
 
     .foot {
       margin-top: 48px;
       padding-top: 18px;
       border-top: 1px solid var(--line);
       color: var(--muted);
-      font-size: 12.5px;
+      font-size: 13px;
       display: flex;
       justify-content: space-between;
       flex-wrap: wrap;
@@ -393,13 +466,22 @@
       return mode === 0 ? name + "m" : name;
     };
 
+    function friendlyError(err) {
+      if (!err) return "Search failed.";
+      if (err.status === 429) return "Spotify's rate limit was hit — wait a moment and try again.";
+      if (err.status === 503 || err.status === 502) return "The server is temporarily unavailable. Reload and try again.";
+      if (err.status >= 500) return "Something went wrong on our end. Reload and try again.";
+      if (err.status === 404) return "That resource wasn't found.";
+      return err.message || "Search failed.";
+    }
+
     const DEMO_TRACKS = [
-      { name: "Ekstasis", artists: ["Julianna Barwick"], album: "Nepenthe", popularity: 41, image: null, url: "#" },
-      { name: "Avril 14th", artists: ["Aphex Twin"], album: "Drukqs", popularity: 68, image: null, url: "#" },
-      { name: "Cirrus", artists: ["Bonobo"], album: "The North Borders", popularity: 64, image: null, url: "#" },
-      { name: "Open Eye Signal", artists: ["Jon Hopkins"], album: "Immunity", popularity: 59, image: null, url: "#" },
-      { name: "An Ending (Ascent)", artists: ["Brian Eno"], album: "Apollo", popularity: 70, image: null, url: "#" },
-      { name: "Saada Bonaire", artists: ["Saada Bonaire"], album: "1992", popularity: 33, image: null, url: "#" },
+      { name: "Ekstasis", artists: ["Julianna Barwick"], album: "Nepenthe", popularity: 41, image: null, url: null },
+      { name: "Avril 14th", artists: ["Aphex Twin"], album: "Drukqs", popularity: 68, image: null, url: null },
+      { name: "Cirrus", artists: ["Bonobo"], album: "The North Borders", popularity: 64, image: null, url: null },
+      { name: "Open Eye Signal", artists: ["Jon Hopkins"], album: "Immunity", popularity: 59, image: null, url: null },
+      { name: "An Ending (Ascent)", artists: ["Brian Eno"], album: "Apollo", popularity: 70, image: null, url: null },
+      { name: "Saada Bonaire", artists: ["Saada Bonaire"], album: "1992", popularity: 33, image: null, url: null },
     ];
     const DEMO_FEAT = [
       { tempo: 92.4,  key: 9, mode: 1, energy: 0.42, danceability: 0.51, valence: 0.34, acousticness: 0.78 },
@@ -467,8 +549,16 @@
         <div className="shell">
           <header className="topbar">
             <div className="brand">
-              <div className="brand-mark" aria-hidden="true"></div>
-              <div>Tonecard <small>- mood discovery</small></div>
+              <div className="brand-mark" aria-hidden="true">
+                <svg width="18" height="14" viewBox="0 0 18 14" fill="currentColor">
+                  <rect x="0"  y="5"  width="2" height="4"  rx="1"/>
+                  <rect x="4"  y="2"  width="2" height="10" rx="1"/>
+                  <rect x="8"  y="0"  width="2" height="14" rx="1"/>
+                  <rect x="12" y="3"  width="2" height="8"  rx="1"/>
+                  <rect x="16" y="6"  width="2" height="3"  rx="1"/>
+                </svg>
+              </div>
+              <div>Tonecard <small>· mood discovery</small></div>
             </div>
             <div className="spacer"></div>
             <button
@@ -496,7 +586,7 @@
 
           <footer className="foot">
             <div>Audio features via ReccoBeats. Catalog by Spotify Web API.</div>
-            <div>Tonecard - open mood discovery</div>
+            <div>Tonecard · public mood discovery</div>
           </footer>
         </div>
       );
@@ -504,6 +594,9 @@
 
     function MoodPlane({ points, point, onPick }) {
       const SIZE = 360;
+      const STEP = 0.05;
+      const BIG_STEP = 0.20;
+      const [kPos, setKPos] = useState(null);
 
       function handleClick(e) {
         const rect = e.currentTarget.getBoundingClientRect();
@@ -511,19 +604,58 @@
         const y = (e.clientY - rect.top) / rect.height;
         const valence = Math.max(0, Math.min(1, x));
         const energy  = Math.max(0, Math.min(1, 1 - y));
+        setKPos(null);
         onPick({ valence, energy });
+      }
+
+      function handleFocus() {
+        if (!kPos) setKPos(point || { valence: 0.5, energy: 0.5 });
+      }
+
+      function handleBlur() {
+        setKPos(null);
+      }
+
+      function handleKeyDown(e) {
+        const cur = kPos || point || { valence: 0.5, energy: 0.5 };
+        const step = e.shiftKey ? BIG_STEP : STEP;
+        let { valence, energy } = cur;
+
+        switch (e.key) {
+          case "ArrowRight": valence = Math.min(1, +(valence + step).toFixed(3)); break;
+          case "ArrowLeft":  valence = Math.max(0, +(valence - step).toFixed(3)); break;
+          case "ArrowUp":    energy  = Math.min(1, +(energy  + step).toFixed(3)); break;
+          case "ArrowDown":  energy  = Math.max(0, +(energy  - step).toFixed(3)); break;
+          case "Enter":
+          case " ":
+            if (kPos) onPick(kPos);
+            e.preventDefault();
+            return;
+          default: return;
+        }
+        e.preventDefault();
+        setKPos({ valence, energy });
       }
 
       return (
         <div className="mood-plane">
-          <div className="mood-axis-label top">Intense</div>
-          <div className="mood-axis-label bottom">Calm</div>
-          <div className="mood-axis-label left">Sad</div>
-          <div className="mood-axis-label right">Happy</div>
-          <svg viewBox={`0 0 ${SIZE} ${SIZE}`} onClick={handleClick}>
-            <rect x="0" y="0" width={SIZE} height={SIZE} fill="var(--paper)" stroke="var(--line)" />
-            <line x1={SIZE/2} y1="0" x2={SIZE/2} y2={SIZE} stroke="var(--line)" strokeDasharray="3 3" />
-            <line x1="0" y1={SIZE/2} x2={SIZE} y2={SIZE/2} stroke="var(--line)" strokeDasharray="3 3" />
+          <div className="mood-axis-label top" aria-hidden="true">Intense</div>
+          <div className="mood-axis-label bottom" aria-hidden="true">Calm</div>
+          <div className="mood-axis-label left" aria-hidden="true">Sad</div>
+          <div className="mood-axis-label right" aria-hidden="true">Happy</div>
+          <svg
+            viewBox={`0 0 ${SIZE} ${SIZE}`}
+            onClick={handleClick}
+            onKeyDown={handleKeyDown}
+            onFocus={handleFocus}
+            onBlur={handleBlur}
+            tabIndex={0}
+            role="application"
+            aria-label="Mood plane. Use arrow keys to move the cursor, Enter or Space to search. Left and right adjust happiness, up and down adjust energy. Hold Shift for larger steps."
+          >
+            <rect x="0" y="0" width={SIZE} height={SIZE} fill="transparent" />
+            <line x1={SIZE/2} y1="0" x2={SIZE/2} y2={SIZE} stroke="var(--accent)" strokeOpacity="0.15" strokeDasharray="4 4" />
+            <line x1="0" y1={SIZE/2} x2={SIZE} y2={SIZE/2} stroke="var(--accent)" strokeOpacity="0.15" strokeDasharray="4 4" />
 
             {(points || []).map((p, i) => (
               <circle
@@ -534,12 +666,12 @@
                 fill="var(--ink-2)"
                 fillOpacity="0.45"
               >
-                <title>{p.name}{p.artists && p.artists.length ? " - " + p.artists.join(", ") : ""}</title>
+                <title>{p.name}{p.artists && p.artists.length ? " · " + p.artists.join(", ") : ""}</title>
               </circle>
             ))}
 
             {point && (
-              <g>
+              <g aria-hidden="true">
                 <circle
                   cx={point.valence * SIZE}
                   cy={(1 - point.energy) * SIZE}
@@ -561,6 +693,21 @@
                 />
               </g>
             )}
+
+            {kPos && (
+              <g aria-hidden="true">
+                <circle
+                  cx={kPos.valence * SIZE}
+                  cy={(1 - kPos.energy) * SIZE}
+                  r="7"
+                  fill="none"
+                  stroke="var(--accent)"
+                  strokeWidth="1.5"
+                  strokeDasharray="3 2"
+                  opacity="0.8"
+                />
+              </g>
+            )}
           </svg>
         </div>
       );
@@ -576,14 +723,15 @@
     ];
 
     function MoodTab() {
-      const [genre, setGenre] = useState(null); // null = all moods
+      const [genre, setGenre] = useState(null);
       const [point, setPoint] = useState(null);
       const [seed, setSeed] = useState([]);
-      const [seedLoading, setSeedLoading] = useState(false);
+      const [seedLoading, setSeedLoading] = useState(true);
       const [results, setResults] = useState(null);
       const [loading, setLoading] = useState(false);
       const [error, setError] = useState(null);
       const [demoMode, setDemoMode] = useState(false);
+      const [announcement, setAnnouncement] = useState("");
 
       async function loadSeed(g) {
         setSeedLoading(true);
@@ -610,6 +758,7 @@
       async function searchAt(p) {
         setPoint(p);
         setLoading(true); setError(null);
+        setAnnouncement("Loading tracks…");
         const url = genre
           ? `/api/genre?genre=${encodeURIComponent(genre)}&valence=${p.valence.toFixed(3)}&energy=${p.energy.toFixed(3)}&count=10`
           : `/api/mood?valence=${p.valence.toFixed(3)}&energy=${p.energy.toFixed(3)}&count=10`;
@@ -617,6 +766,8 @@
           const j = await safeFetch(url);
           setResults(j);
           setDemoMode(false);
+          const n = (j.recommendations || []).length;
+          setAnnouncement(n === 0 ? "No tracks found near this mood." : `Found ${n} track${n === 1 ? "" : "s"} near this mood.`);
         } catch (err) {
           if (err.demo) {
             setResults({
@@ -628,34 +779,45 @@
               candidate_count: 5,
             });
             setDemoMode(true);
+            setAnnouncement("Showing sample data. Server unreachable.");
           } else {
-            setError(err.message || "Search failed.");
+            const msg = friendlyError(err);
+            setError(msg);
+            setAnnouncement(`Error: ${msg}`);
           }
         } finally { setLoading(false); }
       }
 
       const coordText = point
-        ? <span>Picked <b>valence {point.valence.toFixed(2)}</b> - <b>energy {point.energy.toFixed(2)}</b></span>
+        ? <span>Picked <b>valence {point.valence.toFixed(2)}</b> · <b>energy {point.energy.toFixed(2)}</b></span>
         : <span>Click anywhere on the plane to search{genre ? ` in ${genre}` : " a mood"}.</span>;
 
       return (
         <section>
+          <div className="sr-only" aria-live="polite" aria-atomic="true">{announcement}</div>
+
           <div className="hero">
             <div className="eyebrow">Mood</div>
             <h1 className="display">Pick a <em>mood</em>, find tracks.</h1>
-            <p className="lede">Choose a genre to plot its tracks, then click anywhere on the plane - we surface the closest matches by valence and energy via ReccoBeats.</p>
+            <p className="lede">Choose a genre to plot its tracks, then click anywhere on the plane: we surface the closest matches by valence and energy via ReccoBeats.</p>
           </div>
 
-          {demoMode && <div className="demo-banner"><span className="demo-dot" /> demo data - backend unreachable</div>}
+          {demoMode && (
+            <div className="demo-banner" role="alert">
+              <span className="demo-dot" aria-hidden="true" />
+              Sample data only · server unreachable. Results below are not real.
+            </div>
+          )}
 
-          <div style={{marginBottom: 20}}>
-            <div style={{fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--muted)", marginBottom: 8, fontWeight: 600}}>Genre</div>
+          <div className="genre-section">
+            <div className="genre-label">Genre</div>
             <div className="chips">
               {GENRES.map(g => (
                 <button
                   key={g.label}
                   className={"chip" + (genre === g.query ? " active" : "")}
                   onClick={() => handleGenreSelect(g.query)}
+                  aria-pressed={genre === g.query}
                 >
                   {g.label}
                 </button>
@@ -664,14 +826,10 @@
           </div>
 
           <div className="mood-wrap">
-            <div style={{position: "relative"}}>
+            <div className="plane-wrap">
               <MoodPlane points={seed} point={point} onPick={searchAt} />
               {seedLoading && (
-                <div style={{
-                  position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center",
-                  background: "var(--paper-2)", borderRadius: "var(--r-md)", opacity: 0.85,
-                  fontFamily: "'JetBrains Mono', monospace", fontSize: 12, color: "var(--muted)",
-                }}>
+                <div className="seed-overlay" aria-hidden="true">
                   Loading {genre || "pool"}…
                 </div>
               )}
@@ -686,23 +844,41 @@
                 ))}
               </div>
               {results && (
-                <div className="info" style={{padding: 0, fontSize: 12.5}}>
+                <div className="info--compact">
                   Showing <span className="mono">{(results.recommendations || []).length}</span> nearby tracks of <span className="mono">{results.candidate_count || 0}</span> candidates.
                 </div>
               )}
             </div>
           </div>
 
-          {error && <div className="error">{error}</div>}
+          {error && (
+            <div className="error-wrap" role="alert">
+              <span className="error-msg">{error}</span>
+              {point && (
+                <button className="error-retry" onClick={() => searchAt(point)}>Try again</button>
+              )}
+            </div>
+          )}
           {loading && <SkeletonList n={4} />}
           {!loading && results && (
             <>
-              <h2>Tracks near this mood <span className="count">- {results.recommendations.length}</span></h2>
+              <h2>Tracks near this mood <span className="count">· {results.recommendations.length}</span></h2>
               {results.recommendations.length === 0
-                ? <div className="empty">No tracks found near that point. Try clicking somewhere else, or pick a preset.</div>
+                ? (
+                  <div className="empty">
+                    No tracks found near that point.
+                    <div className="empty-presets">
+                      {MOOD_PRESETS.map(p => (
+                        <button key={p.label} className="mood-preset" onClick={() => searchAt({ valence: p.v, energy: p.e })}>
+                          {p.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )
                 : (
                   <div className="results">
-                    {results.recommendations.map((t, i) => <TrackRow key={t.id || i} t={t} i={i} showFeatures />)}
+                    {results.recommendations.map((t, i) => <TrackRow key={t.id || i} t={t} i={i} showFeatures demoMode={demoMode} />)}
                   </div>
                 )}
             </>
@@ -711,7 +887,7 @@
       );
     }
 
-    function TrackRow({ t, i, showFeatures }) {
+    function TrackRow({ t, i, showFeatures, demoMode }) {
       const f = t.features || {};
       const featurePieces = [];
       if (f.tempo)        featurePieces.push(<span key="t"><b>{f.tempo}</b> BPM</span>);
@@ -724,29 +900,29 @@
       return (
         <div className="track">
           <div className="idx">{String(i+1).padStart(2,"0")}</div>
-          {t.image ? <img src={t.image} alt="" className="art" /> : <div className="ph-art" />}
+          {t.image ? <img src={t.image} alt="" className="art" /> : <div className="ph-art" aria-hidden="true" />}
           <div className="body">
             <div className="name">{t.name}</div>
             <div className="meta">
               {Array.isArray(t.artists) ? t.artists.join(", ") : t.artists}
-              {t.album ? <span style={{opacity: 0.5}}> - {t.album}</span> : null}
+              {t.album ? <span className="album"> · {t.album}</span> : null}
             </div>
             {showFeatures && featurePieces.length > 0 && (
               <div className="features">
                 {featurePieces.flatMap((el, idx) =>
-                  idx === 0 ? [el] : [<span key={"s"+idx} className="sep">-</span>, el]
+                  idx === 0 ? [el] : [<span key={"s"+idx} className="sep">·</span>, el]
                 )}
               </div>
             )}
           </div>
-          {t.url && <a className="open" href={t.url} target="_blank" rel="noreferrer">Open ↗</a>}
+          {t.url && !demoMode && <a className="open" href={t.url} target="_blank" rel="noreferrer">Open ↗</a>}
         </div>
       );
     }
 
     function SkeletonList({ n = 4, withFeatures = false }) {
       return (
-        <div className="results">
+        <div className="results" aria-hidden="true">
           {Array.from({length: n}).map((_, i) => (
             <div key={i} className="track" style={{pointerEvents: "none"}}>
               <div className="idx mono">{String(i+1).padStart(2,"0")}</div>
