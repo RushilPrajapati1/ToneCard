@@ -410,6 +410,22 @@
       { tempo: 118.0, key: 0, mode: 1, energy: 0.55, danceability: 0.66, valence: 0.71, acousticness: 0.31 },
     ];
 
+    const GENRES = [
+      { label: "All moods",  query: null },
+      { label: "Pop",        query: "pop" },
+      { label: "Hip-Hop",    query: "hip hop" },
+      { label: "Rock",       query: "rock" },
+      { label: "R&B",        query: "r&b" },
+      { label: "Electronic", query: "electronic" },
+      { label: "Jazz",       query: "jazz" },
+      { label: "Classical",  query: "classical" },
+      { label: "Latin",      query: "latin" },
+      { label: "Punjabi",    query: "punjabi" },
+      { label: "Metal",      query: "metal" },
+      { label: "Country",    query: "country" },
+      { label: "Indie",      query: "indie" },
+    ];
+
     const MOOD_PRESETS = [
       { label: "Calm + sad",      v: 0.25, e: 0.20 },
       { label: "Calm + happy",    v: 0.75, e: 0.25 },
@@ -560,29 +576,45 @@
     ];
 
     function MoodTab() {
+      const [genre, setGenre] = useState(null); // null = all moods
       const [point, setPoint] = useState(null);
       const [seed, setSeed] = useState([]);
+      const [seedLoading, setSeedLoading] = useState(false);
       const [results, setResults] = useState(null);
       const [loading, setLoading] = useState(false);
       const [error, setError] = useState(null);
       const [demoMode, setDemoMode] = useState(false);
 
-      useEffect(() => {
-        (async () => {
-          try {
-            const j = await safeFetch("/api/mood/seed");
-            setSeed(j.points || []);
-          } catch (err) {
-            if (err.demo) { setSeed(DEMO_SEED); setDemoMode(true); }
-          }
-        })();
-      }, []);
+      async function loadSeed(g) {
+        setSeedLoading(true);
+        try {
+          const url = g ? `/api/genre/seed?genre=${encodeURIComponent(g)}` : "/api/mood/seed";
+          const j = await safeFetch(url);
+          setSeed(j.points || []);
+          setDemoMode(false);
+        } catch (err) {
+          if (err.demo) { setSeed(DEMO_SEED); setDemoMode(true); }
+        } finally { setSeedLoading(false); }
+      }
+
+      useEffect(() => { loadSeed(null); }, []);
+
+      function handleGenreSelect(g) {
+        setGenre(g);
+        setPoint(null);
+        setResults(null);
+        setError(null);
+        loadSeed(g);
+      }
 
       async function searchAt(p) {
         setPoint(p);
         setLoading(true); setError(null);
+        const url = genre
+          ? `/api/genre?genre=${encodeURIComponent(genre)}&valence=${p.valence.toFixed(3)}&energy=${p.energy.toFixed(3)}&count=10`
+          : `/api/mood?valence=${p.valence.toFixed(3)}&energy=${p.energy.toFixed(3)}&count=10`;
         try {
-          const j = await safeFetch(`/api/mood?valence=${p.valence.toFixed(3)}&energy=${p.energy.toFixed(3)}&count=10`);
+          const j = await safeFetch(url);
           setResults(j);
           setDemoMode(false);
         } catch (err) {
@@ -602,24 +634,48 @@
         } finally { setLoading(false); }
       }
 
-      const planePoints = seed;
-
       const coordText = point
         ? <span>Picked <b>valence {point.valence.toFixed(2)}</b> - <b>energy {point.energy.toFixed(2)}</b></span>
-        : <span>Click anywhere on the plane to search a mood.</span>;
+        : <span>Click anywhere on the plane to search{genre ? ` in ${genre}` : " a mood"}.</span>;
 
       return (
         <section>
           <div className="hero">
             <div className="eyebrow">Mood</div>
             <h1 className="display">Pick a <em>mood</em>, find tracks.</h1>
-            <p className="lede">A 2D plane of valence (sad to happy) and energy (calm to intense). Click anywhere - we surface tracks closest to your point in (valence, energy) space, ranked by ReccoBeats audio features.</p>
+            <p className="lede">Choose a genre to plot its tracks, then click anywhere on the plane - we surface the closest matches by valence and energy via ReccoBeats.</p>
           </div>
 
           {demoMode && <div className="demo-banner"><span className="demo-dot" /> demo data - backend unreachable</div>}
 
+          <div style={{marginBottom: 20}}>
+            <div style={{fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--muted)", marginBottom: 8, fontWeight: 600}}>Genre</div>
+            <div className="chips">
+              {GENRES.map(g => (
+                <button
+                  key={g.label}
+                  className={"chip" + (genre === g.query ? " active" : "")}
+                  onClick={() => handleGenreSelect(g.query)}
+                >
+                  {g.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
           <div className="mood-wrap">
-            <MoodPlane points={planePoints} point={point} onPick={searchAt} />
+            <div style={{position: "relative"}}>
+              <MoodPlane points={seed} point={point} onPick={searchAt} />
+              {seedLoading && (
+                <div style={{
+                  position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center",
+                  background: "var(--paper-2)", borderRadius: "var(--r-md)", opacity: 0.85,
+                  fontFamily: "'JetBrains Mono', monospace", fontSize: 12, color: "var(--muted)",
+                }}>
+                  Loading {genre || "pool"}…
+                </div>
+              )}
+            </div>
             <div className="mood-side">
               <div className="mood-coord">{coordText}</div>
               <div className="mood-presets">

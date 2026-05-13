@@ -110,6 +110,120 @@ def mood_seed(market="US"):
     return {"points": points}
 
 
+_GENRE_CACHE = {}  # key: "genre:market" -> {candidates, features, ts}
+_GENRE_TTL = 3600
+_GENRE_TRACKS = 60  # more tracks → denser plane
+
+
+def _load_genre_pool(genre, market="US"):
+    key = f"{genre}:{market}"
+    now = time.time()
+    cached = _GENRE_CACHE.get(key)
+    if (
+        cached
+        and cached.get("candidates")
+        and cached.get("features")
+        and now - cached.get("ts", 0) < _GENRE_TTL
+    ):
+        return cached["candidates"], cached["features"]
+
+    try:
+        tracks = _search_tracks(genre, total=_GENRE_TRACKS, market=market)
+    except Exception:
+        tracks = []
+
+    ids = [t["id"] for t in tracks if t.get("id")]
+    try:
+        features = get_features_for_spotify_ids(ids) if ids else {}
+    except Exception:
+        features = {}
+
+    _GENRE_CACHE[key] = {"candidates": tracks, "features": features, "ts": now}
+    return tracks, features
+
+
+def genre_seed(genre, market="US"):
+    """Return genre tracks as (valence, energy) points for the mood plane."""
+    candidates, features = _load_genre_pool(genre, market=market)
+    points = []
+    for t in candidates:
+        tid = t.get("id")
+        feat = features.get(tid)
+        if not feat:
+            continue
+        v = feat.get("valence")
+        e = feat.get("energy")
+        if v is None or e is None:
+            continue
+        points.append({
+            "id": tid,
+            "name": t.get("name", ""),
+            "artists": [a["name"] for a in t.get("artists", [])],
+            "valence": round(float(v), 3),
+            "energy": round(float(e), 3),
+        })
+    return {"points": points, "genre": genre}
+
+
+def genre_search(valence, energy, genre, count=10, market="US"):
+    """Return tracks closest to (valence, energy) from the given genre pool."""
+    try:
+        target_v = max(0.0, min(1.0, float(valence)))
+        target_e = max(0.0, min(1.0, float(energy)))
+    except (TypeError, ValueError):
+        return {"error": "invalid coordinates"}
+
+    candidates, features = _load_genre_pool(genre, market=market)
+    if not candidates or not features:
+        return {
+            "target": {"valence": target_v, "energy": target_e},
+            "recommendations": [],
+            "candidate_count": 0,
+            "feature_coverage": 0,
+        }
+
+    scored = []
+    for t in candidates:
+        tid = t.get("id")
+        feat = features.get(tid)
+        if not feat:
+            continue
+        v = feat.get("valence")
+        e = feat.get("energy")
+        if v is None or e is None:
+            continue
+        dv = float(v) - target_v
+        de = float(e) - target_e
+        scored.append((dv * dv + de * de, t, feat))
+
+    scored.sort(key=lambda x: x[0])
+
+    items = []
+    for _d, t, feat in scored[:count]:
+        items.append({
+            "id": t.get("id"),
+            "name": t.get("name", ""),
+            "artists": [a["name"] for a in t.get("artists", [])],
+            "album": (t.get("album") or {}).get("name", ""),
+            "image": ((t.get("album") or {}).get("images") or [{}])[-1].get("url"),
+            "url": (t.get("external_urls") or {}).get("spotify", ""),
+            "popularity": t.get("popularity", 0),
+            "features": {
+                "valence": round(float(feat["valence"]), 3),
+                "energy": round(float(feat["energy"]), 3),
+                "tempo": round(float(feat["tempo"]), 1) if feat.get("tempo") is not None else None,
+                "danceability": round(float(feat["danceability"]), 2) if feat.get("danceability") is not None else None,
+            },
+        })
+
+    return {
+        "target": {"valence": target_v, "energy": target_e},
+        "recommendations": items,
+        "candidate_count": len(candidates),
+        "feature_coverage": len(features),
+    }
+
+
 def mood_search(valence, energy, count=10, market="US"):
     """Return tracks whose audio features sit closest to a (valence, energy) target."""
     try:
