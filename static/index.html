@@ -438,6 +438,32 @@
       font-weight: 600;
     }
 
+    .upload-card {
+      background: var(--paper-2);
+      border: 1px solid var(--line);
+      border-radius: var(--r-sm);
+      padding: 10px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      min-width: 0;
+    }
+    .upload-card-name {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--ink);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .upload-card-feat {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 12px;
+      color: var(--muted);
+      letter-spacing: 0;
+    }
+    .upload-card-feat b { color: var(--ink-2); font-weight: 500; }
+
     .foot {
       margin-top: 48px;
       padding-top: 18px;
@@ -457,7 +483,7 @@
   <div id="root"></div>
 
   <script type="text/babel" data-presets="react">
-    const { useState, useEffect } = React;
+    const { useState, useEffect, useRef } = React;
 
     const KEY_NAMES = ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
     const keyLabel = (k, mode) => {
@@ -592,7 +618,7 @@
       );
     }
 
-    function MoodPlane({ points, point, onPick }) {
+    function MoodPlane({ points, point, pointLabel, onPick }) {
       const SIZE = 360;
       const STEP = 0.05;
       const BIG_STEP = 0.20;
@@ -708,6 +734,19 @@
                 />
               </g>
             )}
+
+            {point && pointLabel && (
+              <text
+                x={Math.min(point.valence * SIZE + 14, SIZE - 90)}
+                y={Math.max((1 - point.energy) * SIZE + 16, 14)}
+                fill="var(--accent)"
+                fontSize="10"
+                fontFamily="'JetBrains Mono', monospace"
+                opacity="0.85"
+                pointerEvents="none"
+                aria-hidden="true"
+              >{pointLabel}</text>
+            )}
           </svg>
         </div>
       );
@@ -732,6 +771,10 @@
       const [error, setError] = useState(null);
       const [demoMode, setDemoMode] = useState(false);
       const [announcement, setAnnouncement] = useState("");
+      const [uploadResult, setUploadResult] = useState(null);
+      const [uploadLoading, setUploadLoading] = useState(false);
+      const [uploadError, setUploadError] = useState(null);
+      const fileInputRef = useRef(null);
 
       async function loadSeed(g) {
         setSeedLoading(true);
@@ -752,7 +795,47 @@
         setPoint(null);
         setResults(null);
         setError(null);
+        setUploadResult(null);
+        setUploadError(null);
         loadSeed(g);
+      }
+
+      function handleUploadClick() {
+        fileInputRef.current?.click();
+      }
+
+      async function handleFileChange(e) {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        e.target.value = "";
+        setUploadLoading(true);
+        setUploadError(null);
+        setUploadResult(null);
+        setGenre(null);
+        setPoint(null);
+        setResults(null);
+        setError(null);
+        setAnnouncement("Analyzing your track…");
+
+        const formData = new FormData();
+        formData.append("file", file);
+        try {
+          const r = await fetch("/api/upload/analyze", { method: "POST", body: formData });
+          if (!r.ok) {
+            const j = await r.json().catch(() => ({}));
+            const err = new Error(j.error || `HTTP ${r.status}`);
+            err.status = r.status;
+            throw err;
+          }
+          const result = await r.json();
+          setUploadResult(result);
+          await searchAt({ valence: result.valence, energy: result.energy });
+        } catch (err) {
+          setUploadError(err.message || "Upload analysis failed.");
+          setAnnouncement("Upload failed.");
+        } finally {
+          setUploadLoading(false);
+        }
       }
 
       async function searchAt(p) {
@@ -789,8 +872,10 @@
       }
 
       const coordText = point
-        ? <span>Picked <b>valence {point.valence.toFixed(2)}</b> · <b>energy {point.energy.toFixed(2)}</b></span>
-        : <span>Click anywhere on the plane to search{genre ? ` in ${genre}` : " a mood"}.</span>;
+        ? uploadResult
+          ? <span>Your track · <b>valence {point.valence.toFixed(2)}</b> · <b>energy {point.energy.toFixed(2)}</b></span>
+          : <span>Picked <b>valence {point.valence.toFixed(2)}</b> · <b>energy {point.energy.toFixed(2)}</b></span>
+        : <span>Click anywhere on the plane to search{genre ? ` in ${genre}` : " a mood"}, or <b>↑ upload</b> a track.</span>;
 
       return (
         <section>
@@ -815,19 +900,46 @@
               {GENRES.map(g => (
                 <button
                   key={g.label}
-                  className={"chip" + (genre === g.query ? " active" : "")}
+                  className={"chip" + (genre === g.query && !uploadResult ? " active" : "")}
                   onClick={() => handleGenreSelect(g.query)}
-                  aria-pressed={genre === g.query}
+                  aria-pressed={genre === g.query && !uploadResult}
                 >
                   {g.label}
                 </button>
               ))}
+              <button
+                className={"chip" + (uploadResult ? " active" : "")}
+                onClick={handleUploadClick}
+                disabled={uploadLoading}
+                aria-pressed={!!uploadResult}
+                title="Upload an audio file to find tracks with a similar mood"
+              >
+                {uploadLoading
+                  ? "Analyzing…"
+                  : uploadResult
+                    ? "↑ " + (uploadResult.filename.length > 18 ? uploadResult.filename.slice(0, 16) + "…" : uploadResult.filename)
+                    : "↑ Upload"}
+              </button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="audio/*,.mp3,.wav,.flac,.ogg,.m4a"
+                style={{display: "none"}}
+                onChange={handleFileChange}
+              />
             </div>
           </div>
 
           <div className="mood-wrap">
             <div className="plane-wrap">
-              <MoodPlane points={seed} point={point} onPick={searchAt} />
+              <MoodPlane
+                points={seed}
+                point={point}
+                pointLabel={uploadResult
+                  ? (uploadResult.filename.length > 22 ? uploadResult.filename.slice(0, 20) + "…" : uploadResult.filename)
+                  : null}
+                onPick={searchAt}
+              />
               {seedLoading && (
                 <div className="seed-overlay" aria-hidden="true">
                   Loading {genre || "pool"}…
@@ -836,6 +948,17 @@
             </div>
             <div className="mood-side">
               <div className="mood-coord">{coordText}</div>
+              {uploadResult && !uploadLoading && (
+                <div className="upload-card">
+                  <div className="upload-card-name">{uploadResult.filename}</div>
+                  <div className="upload-card-feat">
+                    valence <b>{uploadResult.valence}</b> · energy <b>{uploadResult.energy}</b> · <b>{uploadResult.tempo}</b> BPM
+                  </div>
+                </div>
+              )}
+              {uploadError && (
+                <div className="error" style={{padding: "6px 0"}}>{uploadError}</div>
+              )}
               <div className="mood-presets">
                 {MOOD_PRESETS.map(p => (
                   <button key={p.label} className="mood-preset" onClick={() => searchAt({ valence: p.v, energy: p.e })}>

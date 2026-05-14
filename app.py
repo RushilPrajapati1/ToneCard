@@ -1,8 +1,15 @@
+import os
+import tempfile
+
 from flask import Flask, jsonify, request, send_from_directory
 
 from analyze import genre_search, genre_seed, mood_search, mood_seed
+from audio_analyze import analyze_audio
 
 app = Flask(__name__, static_folder="static", static_url_path="")
+app.config["MAX_CONTENT_LENGTH"] = 30 * 1024 * 1024  # 30 MB
+
+_ALLOWED_AUDIO = {"mp3", "wav", "flac", "ogg", "m4a"}
 
 
 @app.route("/")
@@ -72,6 +79,33 @@ def api_genre():
     if isinstance(data, dict) and data.get("error"):
         return jsonify(data), 400
     return jsonify(data)
+
+
+@app.route("/api/upload/analyze", methods=["POST"])
+def api_upload_analyze():
+    if "file" not in request.files:
+        return jsonify({"error": "no file uploaded"}), 400
+    f = request.files["file"]
+    fname = f.filename or ""
+    ext = fname.rsplit(".", 1)[-1].lower() if "." in fname else ""
+    if not ext or ext not in _ALLOWED_AUDIO:
+        return jsonify({"error": "unsupported file type (mp3/wav/flac/ogg/m4a)"}), 400
+
+    with tempfile.NamedTemporaryFile(suffix=f".{ext}", delete=False) as tmp:
+        tmp_path = tmp.name
+        f.save(tmp_path)
+    try:
+        result = analyze_audio(tmp_path)
+    except Exception as e:
+        return jsonify({"error": f"analysis failed: {e}"}), 500
+    finally:
+        try:
+            os.unlink(tmp_path)
+        except OSError:
+            pass
+
+    result["filename"] = fname
+    return jsonify(result)
 
 
 if __name__ == "__main__":
