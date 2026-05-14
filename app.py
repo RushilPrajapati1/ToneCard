@@ -3,7 +3,7 @@ import tempfile
 
 from flask import Flask, jsonify, request, send_from_directory
 
-from analyze import genre_search, genre_seed, mood_search, mood_seed
+from analyze import genre_search, genre_seed, mood_search, mood_seed, search_by_name
 from audio_analyze import analyze_audio
 
 app = Flask(__name__, static_folder="static", static_url_path="")
@@ -78,6 +78,25 @@ def api_genre():
         return jsonify({"error": str(e)}), 500
     if isinstance(data, dict) and data.get("error"):
         return jsonify(data), 400
+    return jsonify(data)
+
+
+@app.route("/api/search")
+def api_search():
+    q = request.args.get("q", "").strip()
+    if not q:
+        return jsonify({"error": "missing query"}), 400
+    market = request.args.get("market", "US")
+    try:
+        count = max(1, min(int(request.args.get("count", 10)), 25))
+    except ValueError:
+        count = 10
+    try:
+        data = search_by_name(q, count=count, market=market)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    if isinstance(data, dict) and data.get("error"):
+        return jsonify(data), 404
     return jsonify(data)
 
 

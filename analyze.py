@@ -224,6 +224,102 @@ def genre_search(valence, energy, genre, count=10, market="US"):
     }
 
 
+def _fmt_track(t, f):
+    return {
+        "id": t.get("id"),
+        "name": t.get("name", ""),
+        "artists": [a["name"] for a in t.get("artists", [])],
+        "album": (t.get("album") or {}).get("name", ""),
+        "image": ((t.get("album") or {}).get("images") or [{}])[-1].get("url"),
+        "url": (t.get("external_urls") or {}).get("spotify", ""),
+        "popularity": t.get("popularity", 0),
+        "features": {
+            "valence": round(float(f["valence"]), 3),
+            "energy": round(float(f["energy"]), 3),
+            "tempo": round(float(f["tempo"]), 1) if f.get("tempo") is not None else None,
+            "danceability": round(float(f["danceability"]), 2) if f.get("danceability") is not None else None,
+        },
+    }
+
+
+def search_by_name(q, count=10, market="US"):
+    """Find a track by name, get its mood coordinates, and return similar tracks from its genre."""
+    sp = get_client()
+
+    raw = sp.search(q=q, type="track", limit=3, market=market)
+    items = raw.get("tracks", {}).get("items", [])
+    if not items:
+        return {"error": "no tracks found"}
+
+    top = items[0]
+    tid = top.get("id")
+
+    track_feats = get_features_for_spotify_ids([tid])
+    feat = track_feats.get(tid)
+    if not feat:
+        return {"error": "could not get audio features for that track"}
+
+    valence = float(feat.get("valence", 0.5))
+    energy = float(feat.get("energy", 0.5))
+
+    # One artist lookup to get Spotify genre tags
+    artist_id = ((top.get("artists") or [{}])[0]).get("id")
+    genre = None
+    if artist_id:
+        try:
+            genres = sp.artist(artist_id).get("genres", [])
+            genre = genres[0] if genres else None
+        except Exception:
+            pass
+
+    if genre:
+        candidates, pool_features = _load_genre_pool(genre, market=market)
+    else:
+        candidates, pool_features = _load_mood_pool(market=market)
+
+    scored = []
+    for t in candidates:
+        cid = t.get("id")
+        if cid == tid:
+            continue
+        cfeat = pool_features.get(cid)
+        if not cfeat:
+            continue
+        cv = cfeat.get("valence")
+        ce = cfeat.get("energy")
+        if cv is None or ce is None:
+            continue
+        dv = float(cv) - valence
+        de = float(ce) - energy
+        scored.append((dv * dv + de * de, t, cfeat))
+    scored.sort(key=lambda x: x[0])
+
+    pool_points = []
+    for t in candidates:
+        cid = t.get("id")
+        cfeat = pool_features.get(cid)
+        if not cfeat:
+            continue
+        cv, ce = cfeat.get("valence"), cfeat.get("energy")
+        if cv is None or ce is None:
+            continue
+        pool_points.append({
+            "id": cid,
+            "name": t.get("name", ""),
+            "artists": [a["name"] for a in t.get("artists", [])],
+            "valence": round(float(cv), 3),
+            "energy": round(float(ce), 3),
+        })
+
+    return {
+        "track": _fmt_track(top, feat),
+        "genre": genre,
+        "similar": [_fmt_track(t, cfeat) for _, t, cfeat in scored[:count]],
+        "pool_points": pool_points,
+        "candidate_count": len(candidates),
+    }
+
+
 def mood_search(valence, energy, count=10, market="US"):
     """Return tracks whose audio features sit closest to a (valence, energy) target."""
     try:

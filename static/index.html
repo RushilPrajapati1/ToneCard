@@ -438,6 +438,85 @@
       font-weight: 600;
     }
 
+    .tab-bar {
+      display: flex;
+      gap: 2px;
+      border-bottom: 1px solid var(--line);
+      margin-bottom: 32px;
+    }
+    .tab {
+      appearance: none;
+      background: transparent;
+      border: none;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+      padding: 9px 18px;
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--muted);
+      cursor: pointer;
+      transition: color 120ms, border-color 120ms;
+      letter-spacing: -0.01em;
+    }
+    .tab:hover { color: var(--ink); }
+    .tab.tab-active { color: var(--ink); border-bottom-color: var(--accent); }
+    .tab:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+
+    .search-form {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 28px;
+    }
+    .search-input {
+      flex: 1;
+      appearance: none;
+      font-family: inherit;
+      font-size: 15px;
+      padding: 10px 14px;
+      background: var(--paper-2);
+      border: 1px solid var(--line);
+      border-radius: var(--r-md);
+      color: var(--ink);
+      transition: border-color 120ms, box-shadow 120ms;
+      min-width: 0;
+    }
+    .search-input::placeholder { color: var(--muted); }
+    .search-input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--focus-ring); }
+    .search-btn {
+      appearance: none;
+      background: var(--accent);
+      color: var(--paper);
+      border: none;
+      border-radius: var(--r-md);
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 600;
+      padding: 10px 22px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: opacity 120ms;
+      letter-spacing: -0.01em;
+    }
+    .search-btn:hover { opacity: 0.88; }
+    .search-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+    .search-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: var(--r-sm); }
+
+    .search-found { margin-bottom: 20px; }
+    .search-found-label {
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 6px;
+      font-weight: 600;
+    }
+    .track.highlight {
+      background: var(--accent-soft);
+      border: 1px solid color-mix(in oklch, var(--accent) 35%, transparent);
+    }
+    .track.highlight .idx { color: var(--accent); opacity: 1; }
+
     .upload-card {
       background: var(--paper-2);
       border: 1px solid var(--line);
@@ -518,6 +597,15 @@
       { tempo: 118.0, key: 0, mode: 1, energy: 0.55, danceability: 0.66, valence: 0.71, acousticness: 0.31 },
     ];
 
+    const DEMO_SEED = [
+      { id: "h1", name: "Avril 14th",        artists: ["Aphex Twin"],   valence: 0.18, energy: 0.18 },
+      { id: "h2", name: "An Ending (Ascent)",artists: ["Brian Eno"],    valence: 0.35, energy: 0.18 },
+      { id: "h3", name: "Cirrus",            artists: ["Bonobo"],       valence: 0.52, energy: 0.62 },
+      { id: "h4", name: "Open Eye Signal",   artists: ["Jon Hopkins"],  valence: 0.55, energy: 0.81 },
+      { id: "h5", name: "Ekstasis",          artists: ["J. Barwick"],   valence: 0.34, energy: 0.42 },
+      { id: "h6", name: "Saada Bonaire",     artists: ["Saada Bonaire"],valence: 0.71, energy: 0.55 },
+    ];
+
     const GENRES = [
       { label: "All moods",  query: null },
       { label: "Pop",        query: "pop" },
@@ -563,6 +651,7 @@
       const [theme, setTheme] = useState(() =>
         document.documentElement.getAttribute("data-theme") || "light"
       );
+      const [tab, setTab] = useState("mood");
 
       useEffect(() => {
         document.documentElement.setAttribute("data-theme", theme);
@@ -608,13 +697,220 @@
             </button>
           </header>
 
-          <MoodTab />
+          <nav className="tab-bar" aria-label="View">
+            <button
+              className={"tab" + (tab === "mood" ? " tab-active" : "")}
+              onClick={() => setTab("mood")}
+              aria-current={tab === "mood" ? "page" : undefined}
+            >Mood</button>
+            <button
+              className={"tab" + (tab === "search" ? " tab-active" : "")}
+              onClick={() => setTab("search")}
+              aria-current={tab === "search" ? "page" : undefined}
+            >Search</button>
+          </nav>
+
+          {tab === "mood" ? <MoodTab /> : <SearchTab />}
 
           <footer className="foot">
             <div>Audio features via ReccoBeats. Catalog by Spotify Web API.</div>
             <div>Tonecard · public mood discovery</div>
           </footer>
         </div>
+      );
+    }
+
+    const DEMO_SEARCH = {
+      track: {
+        id: "demo-found", name: "Blinding Lights", artists: ["The Weeknd"],
+        album: "After Hours", popularity: 95, image: null, url: null,
+        features: { valence: 0.335, energy: 0.730, tempo: 171.0, danceability: 0.514 },
+      },
+      genre: "canadian pop",
+      similar: DEMO_TRACKS.slice(0, 5).map((t, i) => ({
+        ...t, id: "ds" + i,
+        features: { valence: DEMO_FEAT[i].valence, energy: DEMO_FEAT[i].energy, tempo: DEMO_FEAT[i].tempo, danceability: DEMO_FEAT[i].danceability },
+      })),
+      pool_points: DEMO_SEED,
+      candidate_count: 6,
+    };
+
+    function SearchTab() {
+      const [query, setQuery] = useState("");
+      const [result, setResult] = useState(null);
+      const [similar, setSimilar] = useState([]);
+      const [point, setPoint] = useState(null);
+      const [loading, setLoading] = useState(false);
+      const [similarLoading, setSimilarLoading] = useState(false);
+      const [error, setError] = useState(null);
+      const [similarError, setSimilarError] = useState(null);
+      const [demoMode, setDemoMode] = useState(false);
+      const [announcement, setAnnouncement] = useState("");
+
+      async function doSearch(q) {
+        if (!q.trim()) return;
+        setLoading(true);
+        setError(null);
+        setSimilarError(null);
+        setResult(null);
+        setSimilar([]);
+        setPoint(null);
+        setAnnouncement("Searching…");
+        try {
+          const data = await safeFetch(`/api/search?q=${encodeURIComponent(q)}&count=10`);
+          setResult(data);
+          setSimilar(data.similar || []);
+          setPoint({ valence: data.track.features.valence, energy: data.track.features.energy });
+          setDemoMode(false);
+          setAnnouncement(`Found: ${data.track.name}`);
+        } catch (err) {
+          if (err.demo) {
+            setResult(DEMO_SEARCH);
+            setSimilar(DEMO_SEARCH.similar);
+            setPoint({ valence: DEMO_SEARCH.track.features.valence, energy: DEMO_SEARCH.track.features.energy });
+            setDemoMode(true);
+            setAnnouncement("Showing sample data. Server unreachable.");
+          } else {
+            setError(friendlyError(err));
+            setAnnouncement(`Error: ${friendlyError(err)}`);
+          }
+        } finally {
+          setLoading(false);
+        }
+      }
+
+      async function pickOnPlane(p) {
+        if (!result) return;
+        setPoint(p);
+        setSimilarLoading(true);
+        setSimilarError(null);
+        setAnnouncement("Loading tracks…");
+        const url = result.genre
+          ? `/api/genre?genre=${encodeURIComponent(result.genre)}&valence=${p.valence.toFixed(3)}&energy=${p.energy.toFixed(3)}&count=10`
+          : `/api/mood?valence=${p.valence.toFixed(3)}&energy=${p.energy.toFixed(3)}&count=10`;
+        try {
+          const data = await safeFetch(url);
+          setSimilar(data.recommendations || []);
+          setDemoMode(false);
+          const n = (data.recommendations || []).length;
+          setAnnouncement(`Found ${n} track${n === 1 ? "" : "s"} near this point.`);
+        } catch (err) {
+          if (err.demo) {
+            setSimilar(DEMO_SEARCH.similar);
+            setDemoMode(true);
+          } else {
+            setSimilarError(friendlyError(err));
+            setAnnouncement(`Error: ${friendlyError(err)}`);
+          }
+        } finally {
+          setSimilarLoading(false);
+        }
+      }
+
+      const atFoundTrack = result && point &&
+        Math.abs(point.valence - result.track.features.valence) < 0.001 &&
+        Math.abs(point.energy - result.track.features.energy) < 0.001;
+
+      return (
+        <section>
+          <div className="sr-only" aria-live="polite" aria-atomic="true">{announcement}</div>
+
+          <div className="hero">
+            <div className="eyebrow">Search</div>
+            <h1 className="display">Find a <em>song</em>, discover similar.</h1>
+            <p className="lede">Search any track — we'll pinpoint its mood and surface similar songs from its genre via ReccoBeats.</p>
+          </div>
+
+          {demoMode && (
+            <div className="demo-banner" role="alert">
+              <span className="demo-dot" aria-hidden="true" />
+              Sample data only · server unreachable. Results below are not real.
+            </div>
+          )}
+
+          <form className="search-form" onSubmit={e => { e.preventDefault(); doSearch(query); }}>
+            <input
+              className="search-input"
+              type="search"
+              placeholder="e.g. Blinding Lights, Bohemian Rhapsody, Lose Yourself…"
+              value={query}
+              onChange={e => setQuery(e.target.value)}
+              aria-label="Search for a song"
+            />
+            <button className="search-btn" type="submit" disabled={loading || !query.trim()}>
+              {loading ? "Searching…" : "Search"}
+            </button>
+          </form>
+
+          {error && (
+            <div className="error-wrap" role="alert">
+              <span className="error-msg">{error}</span>
+              <button className="error-retry" onClick={() => doSearch(query)}>Try again</button>
+            </div>
+          )}
+
+          {loading && <SkeletonList n={4} withFeatures />}
+
+          {!loading && result && (
+            <>
+              <div className="search-found">
+                <div className="search-found-label">Found</div>
+                <div className="results">
+                  <TrackRow t={result.track} i={-1} showFeatures demoMode={demoMode} highlight />
+                </div>
+              </div>
+
+              <div className="mood-wrap">
+                <div className="plane-wrap">
+                  <MoodPlane
+                    points={result.pool_points || []}
+                    point={point}
+                    pointLabel={atFoundTrack ? result.track.name : null}
+                    onPick={pickOnPlane}
+                  />
+                </div>
+                <div className="mood-side">
+                  <div className="mood-coord">
+                    {atFoundTrack
+                      ? <span>Your song · <b>valence {point.valence.toFixed(2)}</b> · <b>energy {point.energy.toFixed(2)}</b></span>
+                      : <span>Picked <b>valence {point.valence.toFixed(2)}</b> · <b>energy {point.energy.toFixed(2)}</b></span>
+                    }
+                  </div>
+                  {result.genre && (
+                    <div className="info--compact">Genre pool: <span className="mono">{result.genre}</span></div>
+                  )}
+                  <div className="info--compact">
+                    Showing <span className="mono">{similar.length}</span> of <span className="mono">{result.candidate_count}</span> candidates.
+                  </div>
+                  <div className="info--compact" style={{color: "var(--muted)"}}>
+                    Click anywhere on the plane to explore the genre.
+                  </div>
+                </div>
+              </div>
+
+              {similarError && (
+                <div className="error-wrap" role="alert">
+                  <span className="error-msg">{similarError}</span>
+                </div>
+              )}
+
+              <h2>
+                {atFoundTrack ? "Similar songs" : "Tracks near this mood"}
+                {result.genre ? <> in <span style={{textTransform:"none", letterSpacing:0, fontWeight:400}}>{result.genre}</span></> : ""}
+                <span className="count"> · {similar.length}</span>
+              </h2>
+
+              {similarLoading && <SkeletonList n={4} withFeatures />}
+              {!similarLoading && (
+                similar.length === 0
+                  ? <div className="empty">No tracks found near that point. Try clicking elsewhere on the plane.</div>
+                  : <div className="results">
+                      {similar.map((t, i) => <TrackRow key={t.id || i} t={t} i={i} showFeatures demoMode={demoMode} />)}
+                    </div>
+              )}
+            </>
+          )}
+        </section>
       );
     }
 
@@ -752,14 +1048,6 @@
       );
     }
 
-    const DEMO_SEED = [
-      { id: "h1", name: "Avril 14th",        artists: ["Aphex Twin"],   valence: 0.18, energy: 0.18 },
-      { id: "h2", name: "An Ending (Ascent)",artists: ["Brian Eno"],    valence: 0.35, energy: 0.18 },
-      { id: "h3", name: "Cirrus",            artists: ["Bonobo"],       valence: 0.52, energy: 0.62 },
-      { id: "h4", name: "Open Eye Signal",   artists: ["Jon Hopkins"],  valence: 0.55, energy: 0.81 },
-      { id: "h5", name: "Ekstasis",          artists: ["J. Barwick"],   valence: 0.34, energy: 0.42 },
-      { id: "h6", name: "Saada Bonaire",     artists: ["Saada Bonaire"],valence: 0.71, energy: 0.55 },
-    ];
 
     function MoodTab() {
       const [genre, setGenre] = useState(null);
@@ -1010,7 +1298,7 @@
       );
     }
 
-    function TrackRow({ t, i, showFeatures, demoMode }) {
+    function TrackRow({ t, i, showFeatures, demoMode, highlight }) {
       const f = t.features || {};
       const featurePieces = [];
       if (f.tempo)        featurePieces.push(<span key="t"><b>{f.tempo}</b> BPM</span>);
@@ -1021,8 +1309,8 @@
       if (f.acousticness != null) featurePieces.push(<span key="a">acoustic <b>{f.acousticness}</b></span>);
 
       return (
-        <div className="track">
-          <div className="idx">{String(i+1).padStart(2,"0")}</div>
+        <div className={"track" + (highlight ? " highlight" : "")}>
+          <div className="idx">{highlight ? "★" : String(i+1).padStart(2,"0")}</div>
           {t.image ? <img src={t.image} alt="" className="art" /> : <div className="ph-art" aria-hidden="true" />}
           <div className="body">
             <div className="name">{t.name}</div>
