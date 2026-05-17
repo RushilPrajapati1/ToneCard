@@ -667,6 +667,63 @@
     }
     .upload-card-feat b { color: var(--ink-2); font-weight: 500; }
 
+    .mode-toggle { margin-bottom: 20px; }
+
+    .artist-card {
+      display: flex;
+      gap: 20px;
+      align-items: flex-start;
+      padding: 18px 20px;
+      background: var(--bg-2);
+      border: 1px solid var(--line);
+      border-radius: var(--r-md);
+      margin-bottom: 24px;
+    }
+    .artist-avatar {
+      width: 88px; height: 88px;
+      border-radius: 50%;
+      object-fit: cover;
+      flex-shrink: 0;
+      border: 1px solid var(--line);
+      background: var(--bg-2);
+    }
+    .ph-avatar {
+      width: 88px; height: 88px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      border: 1px solid var(--line);
+      background: linear-gradient(135deg, var(--bg-2) 0%, var(--line) 100%);
+    }
+    .artist-body { min-width: 0; flex: 1; }
+    .artist-name {
+      font-size: 20px;
+      font-weight: 600;
+      letter-spacing: -0.025em;
+      color: var(--ink);
+      margin-bottom: 6px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .artist-genres {
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 11px;
+      letter-spacing: 0.02em;
+      color: var(--ink-3);
+      margin-bottom: 8px;
+    }
+    .artist-stats {
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 11px;
+      color: var(--muted);
+      letter-spacing: 0.04em;
+      display: flex;
+      gap: 14px;
+      flex-wrap: wrap;
+      margin-bottom: 10px;
+    }
+    .artist-stats b { color: var(--ink-2); font-weight: 500; }
+
     .foot {
       margin-top: 56px;
       padding-top: 18px;
@@ -840,6 +897,23 @@
       );
     }
 
+    const DEMO_ARTIST = {
+      artist: {
+        id: "demo-artist",
+        name: "Brian Eno",
+        genres: ["ambient", "art rock", "experimental"],
+        popularity: 68,
+        followers: 1520000,
+        image: null,
+        url: null,
+      },
+      tracks: DEMO_TRACKS.slice(0, 5).map((t, i) => ({
+        ...t, id: "da" + i,
+        features: { valence: DEMO_FEAT[i].valence, energy: DEMO_FEAT[i].energy, tempo: DEMO_FEAT[i].tempo, danceability: DEMO_FEAT[i].danceability },
+      })),
+      points: DEMO_SEED.slice(0, 5),
+    };
+
     const DEMO_SEARCH = {
       track: {
         id: "demo-found", name: "Sample Track", artists: ["Demo Artist"],
@@ -856,16 +930,32 @@
     };
 
     function SearchTab() {
+      const [mode, setMode] = useState("track");
       const [query, setQuery] = useState("");
+      // track mode state
       const [result, setResult] = useState(null);
       const [similar, setSimilar] = useState([]);
       const [point, setPoint] = useState(null);
-      const [loading, setLoading] = useState(false);
       const [similarLoading, setSimilarLoading] = useState(false);
-      const [error, setError] = useState(null);
       const [similarError, setSimilarError] = useState(null);
+      // artist mode state
+      const [artistResult, setArtistResult] = useState(null);
+      // shared state
+      const [loading, setLoading] = useState(false);
+      const [error, setError] = useState(null);
       const [demoMode, setDemoMode] = useState(false);
       const [announcement, setAnnouncement] = useState("");
+
+      function switchMode(m) {
+        setMode(m);
+        setResult(null);
+        setSimilar([]);
+        setPoint(null);
+        setSimilarError(null);
+        setArtistResult(null);
+        setError(null);
+        setDemoMode(false);
+      }
 
       async function doSearch(q) {
         if (!q.trim()) return;
@@ -875,7 +965,30 @@
         setResult(null);
         setSimilar([]);
         setPoint(null);
+        setArtistResult(null);
         setAnnouncement("Searching…");
+
+        if (mode === "artist") {
+          try {
+            const data = await safeFetch(`/api/artist?q=${encodeURIComponent(q)}&count=10`);
+            setArtistResult(data);
+            setDemoMode(false);
+            setAnnouncement(`Found: ${data.artist.name}`);
+          } catch (err) {
+            if (err.demo) {
+              setArtistResult(DEMO_ARTIST);
+              setDemoMode(true);
+              setAnnouncement("Showing sample data. Server unreachable.");
+            } else {
+              setError(friendlyError(err));
+              setAnnouncement(`Error: ${friendlyError(err)}`);
+            }
+          } finally {
+            setLoading(false);
+          }
+          return;
+        }
+
         try {
           const data = await safeFetch(`/api/search?q=${encodeURIComponent(q)}&count=10`);
           setResult(data);
@@ -937,8 +1050,12 @@
 
           <div className="hero">
             <div className="eyebrow">02 · Lookup</div>
-            <h1 className="display">Name a song. <strong>Hear its kin.</strong></h1>
-            <p className="lede">Type any track. We fix its coordinates on the plane and pull back neighbors riding the same wavelength.</p>
+            {mode === "artist"
+              ? <><h1 className="display">Name an artist. <strong>Hear their world.</strong></h1>
+                  <p className="lede">Search any artist and we'll map their top tracks on the mood plane with full audio coordinates.</p></>
+              : <><h1 className="display">Name a song. <strong>Hear its kin.</strong></h1>
+                  <p className="lede">Type any track. We fix its coordinates on the plane and pull back neighbors riding the same wavelength.</p></>
+            }
           </div>
 
           {demoMode && (
@@ -948,14 +1065,21 @@
             </div>
           )}
 
+          <div className="mode-toggle">
+            <div className="chips">
+              <button className={"chip" + (mode === "track" ? " active" : "")} onClick={() => switchMode("track")} aria-pressed={mode === "track"}>Track</button>
+              <button className={"chip" + (mode === "artist" ? " active" : "")} onClick={() => switchMode("artist")} aria-pressed={mode === "artist"}>Artist</button>
+            </div>
+          </div>
+
           <form className="search-form" onSubmit={e => { e.preventDefault(); doSearch(query); }}>
             <input
               className="search-input"
               type="search"
-              placeholder="Type a title or artist…"
+              placeholder={mode === "artist" ? "Type an artist name…" : "Type a title or artist…"}
               value={query}
               onChange={e => setQuery(e.target.value)}
-              aria-label="Search for a song"
+              aria-label={mode === "artist" ? "Search for an artist" : "Search for a song"}
             />
             <button className="search-btn" type="submit" disabled={loading || !query.trim()}>
               {loading ? "Probing…" : "Probe"}
@@ -971,7 +1095,11 @@
 
           {loading && <SkeletonList n={4} withFeatures />}
 
-          {!loading && result && (
+          {!loading && mode === "artist" && artistResult && (
+            <ArtistView data={artistResult} demoMode={demoMode} />
+          )}
+
+          {!loading && mode === "track" && result && (
             <>
               <div className="search-found">
                 <div className="search-found-label">Target</div>
@@ -1034,6 +1162,65 @@
       );
     }
 
+    function ArtistView({ data, demoMode }) {
+      const { artist, tracks, points } = data;
+      return (
+        <>
+          <div className="artist-card">
+            {artist.image
+              ? <img src={artist.image} alt="" className="artist-avatar" />
+              : <div className="ph-avatar" aria-hidden="true" />
+            }
+            <div className="artist-body">
+              <div className="artist-name">{artist.name}</div>
+              {artist.genres && artist.genres.length > 0 && (
+                <div className="artist-genres">{artist.genres.slice(0, 4).join(" · ")}</div>
+              )}
+              <div className="artist-stats">
+                <span>Popularity <b>{artist.popularity}</b></span>
+                {artist.followers > 0 && (
+                  <span><b>{artist.followers.toLocaleString()}</b> followers</span>
+                )}
+              </div>
+              {artist.url && !demoMode && (
+                <a className="open" href={artist.url} target="_blank" rel="noreferrer">Open on Spotify ↗</a>
+              )}
+            </div>
+          </div>
+
+          {points.length > 0 && (
+            <div className="mood-wrap">
+              <div className="plane-wrap">
+                <MoodPlane points={points} point={null} pointLabel={null} onPick={null} />
+              </div>
+              <div className="mood-side">
+                <div className="mood-coord">
+                  <span><b>{artist.name}</b> on the plane</span>
+                </div>
+                <div className="info--compact">
+                  {points.length} track{points.length !== 1 ? "s" : ""} with mood data
+                </div>
+                <div className="info--compact" style={{color:"var(--muted)"}}>
+                  each dot is one of their top tracks.
+                </div>
+              </div>
+            </div>
+          )}
+
+          <h2>
+            Top Tracks
+            <span className="count">{tracks.length} results</span>
+          </h2>
+          {tracks.length === 0
+            ? <div className="empty">No tracks found.</div>
+            : <div className="results">
+                {tracks.map((t, i) => <TrackRow key={t.id || i} t={t} i={i} showFeatures demoMode={demoMode} />)}
+              </div>
+          }
+        </>
+      );
+    }
+
     function MoodPlane({ points, point, pointLabel, onPick }) {
       const SIZE = 360;
       const STEP = 0.05;
@@ -1041,6 +1228,7 @@
       const [kPos, setKPos] = useState(null);
 
       function handleClick(e) {
+        if (!onPick) return;
         const rect = e.currentTarget.getBoundingClientRect();
         const x = (e.clientX - rect.left) / rect.width;
         const y = (e.clientY - rect.top) / rect.height;
@@ -1092,12 +1280,13 @@
           <svg
             viewBox={`0 0 ${SIZE} ${SIZE}`}
             onClick={handleClick}
-            onKeyDown={handleKeyDown}
-            onFocus={handleFocus}
-            onBlur={handleBlur}
-            tabIndex={0}
-            role="application"
-            aria-label="Mood plane. Use arrow keys to move the cursor, Enter or Space to search. Left and right adjust happiness, up and down adjust energy. Hold Shift for larger steps."
+            onKeyDown={onPick ? handleKeyDown : undefined}
+            onFocus={onPick ? handleFocus : undefined}
+            onBlur={onPick ? handleBlur : undefined}
+            tabIndex={onPick ? 0 : -1}
+            role={onPick ? "application" : "img"}
+            aria-label={onPick ? "Mood plane. Use arrow keys to move the cursor, Enter or Space to search. Left and right adjust happiness, up and down adjust energy. Hold Shift for larger steps." : "Mood plane showing track positions"}
+            style={onPick ? {} : {cursor: "default"}}
           >
             <rect x="0" y="0" width={SIZE} height={SIZE} fill="transparent" />
             <line x1={SIZE/2} y1="0" x2={SIZE/2} y2={SIZE} stroke="var(--accent)" strokeOpacity="0.20" strokeDasharray="2 4" />

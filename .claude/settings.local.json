@@ -24,7 +24,10 @@
       "PowerShell(Get-NetTCPConnection -LocalPort 5050 -ErrorAction SilentlyContinue)",
       "Bash(git add *)",
       "Bash(git commit -m ' *)",
-      "Bash(git push *)"
+      "Bash(git push *)",
+      "PowerShell(Get-Process -Name python -ErrorAction SilentlyContinue | Where-Object { $_.MainWindowTitle -eq \"\" } | Stop-Process -Force -Confirm:$false -ErrorAction SilentlyContinue; Write-Host \"Done clearing old processes\")",
+      "PowerShell(Get-Process -Name python -ErrorAction SilentlyContinue)",
+      "PowerShell(Stop-Process -Force -Confirm:$false -ErrorAction SilentlyContinue)"
     ]
   }
 }

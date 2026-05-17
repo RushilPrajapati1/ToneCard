@@ -320,6 +320,72 @@ def search_by_name(q, count=10, market="US"):
     }
 
 
+def artist_search(query, count=10, market="US"):
+    """Find an artist by name, return their profile and top tracks with mood features."""
+    sp = get_client()
+
+    raw = sp.search(q=query, type="artist", limit=1, market=market)
+    items = raw.get("artists", {}).get("items", [])
+    if not items:
+        return {"error": "artist not found"}
+
+    a = items[0]
+    artist_info = {
+        "id": a["id"],
+        "name": a["name"],
+        "genres": a.get("genres", []),
+        "popularity": a.get("popularity", 0),
+        "followers": (a.get("followers") or {}).get("total", 0),
+        "image": (a.get("images") or [{}])[0].get("url"),
+        "url": (a.get("external_urls") or {}).get("spotify"),
+    }
+
+    top_raw = sp.artist_top_tracks(a["id"], country=market).get("tracks", [])
+    top_raw = top_raw[:count]
+
+    track_ids = [t["id"] for t in top_raw if t.get("id")]
+    try:
+        features_map = get_features_for_spotify_ids(track_ids) if track_ids else {}
+    except Exception:
+        features_map = {}
+
+    tracks = []
+    points = []
+    for t in top_raw:
+        tid = t.get("id")
+        album = t.get("album") or {}
+        images = album.get("images") or []
+        feat = features_map.get(tid, {})
+        v = feat.get("valence")
+        e = feat.get("energy")
+        formatted = {
+            "id": tid,
+            "name": t.get("name", ""),
+            "artists": [a2["name"] for a2 in t.get("artists", [])],
+            "album": album.get("name", ""),
+            "image": images[0].get("url") if images else None,
+            "url": (t.get("external_urls") or {}).get("spotify"),
+            "popularity": t.get("popularity", 0),
+            "features": {
+                "valence": round(float(v), 3) if v is not None else None,
+                "energy": round(float(e), 3) if e is not None else None,
+                "tempo": round(float(feat["tempo"]), 1) if feat.get("tempo") is not None else None,
+                "danceability": round(float(feat["danceability"]), 2) if feat.get("danceability") is not None else None,
+            },
+        }
+        tracks.append(formatted)
+        if v is not None and e is not None:
+            points.append({
+                "id": tid,
+                "name": t.get("name", ""),
+                "artists": formatted["artists"],
+                "valence": round(float(v), 3),
+                "energy": round(float(e), 3),
+            })
+
+    return {"artist": artist_info, "tracks": tracks, "points": points}
+
+
 def mood_search(valence, energy, count=10, market="US"):
     """Return tracks whose audio features sit closest to a (valence, energy) target."""
     try:
