@@ -20,7 +20,11 @@
       "Bash(node \"c:\\\\Users\\\\rushi\\\\vscode projects\\\\Spotifiy_Vibe\\\\.agents\\\\skills\\\\impeccable\\\\scripts\\\\critique-storage.mjs\" slug \"static/index.html\")",
       "Bash(set \"IMPECCABLE_CRITIQUE_META={\\\\\"target\\\\\":\\\\\"static/index.html\\\\\",\\\\\"total_score\\\\\":26,\\\\\"p0_count\\\\\":1,\\\\\"p1_count\\\\\":3}\")",
       "Bash(node \".agents\\\\skills\\\\impeccable\\\\scripts\\\\critique-storage.mjs\" write \"static-index-html\" \".impeccable\\\\critique\\\\body_tmp.md\")",
-      "Bash(.\\\\venv\\\\Scripts\\\\python.exe -c \"import librosa; print\\('librosa ok', librosa.__version__\\)\")"
+      "Bash(.\\\\venv\\\\Scripts\\\\python.exe -c \"import librosa; print\\('librosa ok', librosa.__version__\\)\")",
+      "PowerShell(Get-NetTCPConnection -LocalPort 5050 -ErrorAction SilentlyContinue)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git push *)"
     ]
   }
 }

@@ -7,7 +7,7 @@
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,600;12..96,700&family=JetBrains+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
 
   <script>
     (function() {
@@ -25,53 +25,57 @@
 
   <style>
     :root {
-      --paper: oklch(0.985 0.005 85);
-      --paper-2: oklch(0.965 0.006 85);
-      --ink: oklch(0.18 0.01 80);
-      --ink-hover: oklch(0.28 0.01 80);
-      --ink-2: oklch(0.32 0.01 80);
-      --muted: oklch(0.55 0.012 80);
-      --line: oklch(0.905 0.006 85);
-      --line-2: oklch(0.86 0.008 85);
-      --accent: oklch(0.60 0.22 30);
-      --accent-soft: oklch(0.94 0.05 30);
-      --accent-ink: oklch(0.38 0.14 30);
-      --focus-ring: oklch(0.18 0.01 80 / 0.10);
-      --shadow: 0 1px 0 oklch(0.85 0.01 80 / 0.5), 0 8px 24px -12px oklch(0.2 0.02 80 / 0.18);
-      --r-sm: 8px;
-      --r-md: 14px;
-      --r-lg: 22px;
+      --bg:       #F4F2EC;
+      --bg-2:     #ECE9E1;
+      --surface:  #FFFFFF;
+      --ink:      #111418;
+      --ink-2:    #2B3038;
+      --ink-3:    #4A5159;
+      --muted:    #7A818A;
+      --line:     #D9D5CB;
+      --line-2:   #C6C2B6;
+      --accent:   #0F7F86;
+      --accent-2: #14A5AE;
+      --accent-soft: #D9EEEE;
+      --accent-ink:  #094C50;
+      --warn:     #B5451B;
+      --focus-ring: rgba(15, 127, 134, 0.28);
+      --r-xs: 4px;
+      --r-sm: 6px;
+      --r-md: 10px;
+      --r-lg: 16px;
       color-scheme: light;
     }
     :root[data-theme="dark"] {
-      --paper: oklch(0.18 0.008 260);
-      --paper-2: oklch(0.23 0.009 260);
-      --ink: oklch(0.96 0.005 85);
-      --ink-hover: oklch(0.86 0.005 85);
-      --ink-2: oklch(0.82 0.006 85);
-      --muted: oklch(0.64 0.012 85);
-      --line: oklch(0.30 0.009 260);
-      --line-2: oklch(0.38 0.010 260);
-      --accent: oklch(0.72 0.20 30);
-      --accent-soft: oklch(0.30 0.09 30);
-      --accent-ink: oklch(0.88 0.17 30);
-      --focus-ring: oklch(0.96 0.005 85 / 0.18);
-      --shadow: 0 1px 0 oklch(0.10 0.01 260 / 0.6), 0 8px 24px -12px oklch(0.04 0.01 260 / 0.6);
+      --bg:       #0B0E11;
+      --bg-2:     #131820;
+      --surface:  #1A2029;
+      --ink:      #ECEEF1;
+      --ink-2:    #C8CCD2;
+      --ink-3:    #969BA3;
+      --muted:    #6E747D;
+      --line:     #232A33;
+      --line-2:   #2D3540;
+      --accent:   #3FD3DC;
+      --accent-2: #6DE6EC;
+      --accent-soft: #0F3033;
+      --accent-ink:  #8CEFF4;
+      --warn:     #E8845D;
+      --focus-ring: rgba(63, 211, 220, 0.28);
       color-scheme: dark;
     }
     * { box-sizing: border-box; }
     html, body { margin: 0; padding: 0; }
     body {
-      font-family: "Bricolage Grotesque", -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
-      background: var(--paper);
+      font-family: "Space Grotesk", -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+      background: var(--bg);
       color: var(--ink);
       font-size: 15px;
       line-height: 1.45;
       -webkit-font-smoothing: antialiased;
       letter-spacing: -0.005em;
     }
-    .mono { font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace; font-feature-settings: "tnum", "ss01"; }
-    .serif { font-family: "Instrument Serif", "Times New Roman", serif; font-style: italic; font-weight: 400; letter-spacing: -0.01em; }
+    .mono { font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace; font-feature-settings: "tnum"; }
 
     .sr-only {
       position: absolute;
@@ -96,225 +100,302 @@
       display: flex;
       align-items: center;
       gap: 18px;
-      padding: 10px 0 28px;
+      padding: 4px 0 22px;
       border-bottom: 1px solid var(--line);
-      margin-bottom: 32px;
+      margin-bottom: 28px;
     }
     .brand {
       display: flex;
       align-items: center;
       gap: 12px;
+      font-family: "IBM Plex Mono", monospace;
       font-weight: 600;
-      font-size: 17px;
-      letter-spacing: -0.02em;
+      font-size: 13px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
     }
     .brand-mark {
-      width: 28px;
-      height: 28px;
-      border-radius: 8px;
+      width: 30px;
+      height: 30px;
+      border-radius: 0;
       background: var(--ink);
-      color: var(--paper);
+      color: var(--bg);
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 5px;
       flex-shrink: 0;
+      position: relative;
     }
-    .brand small { color: var(--muted); font-weight: 400; font-size: 13px; margin-left: 2px; }
+    .brand-mark::after {
+      content: "";
+      position: absolute;
+      inset: 3px;
+      border: 1px solid var(--bg);
+      border-radius: 0;
+      pointer-events: none;
+    }
+    .brand small {
+      color: var(--muted);
+      font-weight: 400;
+      font-size: 12px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      margin-left: 4px;
+    }
 
     .spacer { flex: 1; }
 
+    .build-tag {
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 11px;
+      color: var(--muted);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      margin-right: 6px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .build-tag::before {
+      content: "";
+      width: 6px; height: 6px;
+      background: var(--accent);
+      border-radius: 999px;
+      box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 20%, transparent);
+    }
+    @media (max-width: 560px) { .build-tag { display: none; } }
+
     .theme-toggle {
       appearance: none;
-      width: 36px;
-      height: 36px;
+      width: 32px;
+      height: 32px;
       display: inline-grid;
       place-items: center;
-      background: var(--paper-2);
+      background: transparent;
       color: var(--ink-2);
       border: 1px solid var(--line);
-      border-radius: 999px;
+      border-radius: var(--r-sm);
       cursor: pointer;
       transition: color 120ms ease, border-color 120ms ease, background 120ms ease;
     }
-    .theme-toggle:hover { color: var(--ink); border-color: var(--ink-2); }
+    .theme-toggle:hover { color: var(--ink); border-color: var(--ink-3); }
     .theme-toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-    .theme-toggle svg { width: 16px; height: 16px; display: block; }
+    .theme-toggle svg { width: 14px; height: 14px; display: block; }
 
-    .hero { margin-bottom: 28px; }
+    .hero { margin-bottom: 28px; max-width: 760px; }
     .eyebrow {
-      font-size: 12px;
-      letter-spacing: 0.14em;
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 11px;
+      letter-spacing: 0.18em;
       text-transform: uppercase;
-      color: var(--muted);
-      margin-bottom: 10px;
-    }
-    h1.display {
-      font-family: "Bricolage Grotesque", inherit;
-      font-weight: 700;
-      letter-spacing: -0.04em;
-      font-size: clamp(36px, 5vw, 56px);
-      line-height: 1.02;
-      margin: 0 0 10px;
-    }
-    h1.display em { font-family: "Instrument Serif", serif; font-style: italic; font-weight: 400; color: var(--accent); letter-spacing: -0.01em; padding-right: 4px; }
-    .lede { color: var(--muted); font-size: 16px; max-width: 56ch; margin: 0; }
-
-    h2 {
-      font-size: 13px;
-      font-weight: 600;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      color: var(--muted);
-      margin: 32px 0 14px;
-      display: flex;
-      align-items: baseline;
+      color: var(--accent);
+      margin-bottom: 14px;
+      display: inline-flex;
+      align-items: center;
       gap: 10px;
     }
-    h2 .count { color: var(--ink-2); font-weight: 500; letter-spacing: -0.005em; text-transform: none; font-size: 13px; }
+    .eyebrow::before {
+      content: "";
+      display: inline-block;
+      width: 18px; height: 1px;
+      background: var(--accent);
+    }
+    h1.display {
+      font-family: "Space Grotesk", inherit;
+      font-weight: 500;
+      letter-spacing: -0.035em;
+      font-size: clamp(34px, 4.6vw, 52px);
+      line-height: 1.04;
+      margin: 0 0 12px;
+      color: var(--ink);
+    }
+    h1.display strong {
+      font-weight: 700;
+      color: var(--accent);
+      letter-spacing: -0.035em;
+    }
+    .lede { color: var(--ink-3); font-size: 16px; max-width: 60ch; margin: 0; }
 
-    .results { display: flex; flex-direction: column; gap: 2px; }
+    h2 {
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--ink-2);
+      margin: 32px 0 14px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    h2::before {
+      content: "";
+      flex-shrink: 0;
+      width: 6px; height: 6px;
+      background: var(--accent);
+    }
+    h2 .count {
+      color: var(--muted);
+      font-weight: 400;
+      letter-spacing: 0.04em;
+      font-size: 11px;
+      margin-left: auto;
+      text-transform: none;
+    }
+
+    .results { display: flex; flex-direction: column; gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: var(--r-md); overflow: hidden; }
     .track {
       display: grid;
-      grid-template-columns: 28px 60px 1fr auto;
+      grid-template-columns: 36px 56px 1fr auto;
       gap: 16px;
       align-items: center;
-      padding: 12px 14px;
-      border-radius: var(--r-md);
+      padding: 12px 16px;
+      background: var(--bg);
       transition: background 120ms ease;
     }
-    .track:hover { background: var(--paper-2); }
+    .track:hover { background: var(--bg-2); }
     .track .idx {
-      font-family: "JetBrains Mono", monospace;
-      font-size: 12px;
-      color: var(--accent);
-      opacity: 0.7;
-      text-align: right;
-      letter-spacing: 0;
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--muted);
+      text-align: left;
+      letter-spacing: 0.04em;
     }
     .track .art {
-      width: 60px; height: 60px;
-      border-radius: 10px;
-      background: var(--paper-2);
+      width: 56px; height: 56px;
+      border-radius: var(--r-sm);
+      background: var(--bg-2);
       object-fit: cover;
       border: 1px solid var(--line);
     }
     .ph-art {
-      width: 60px; height: 60px;
-      border-radius: 10px;
+      width: 56px; height: 56px;
+      border-radius: var(--r-sm);
       border: 1px solid var(--line);
-      background-image: repeating-linear-gradient(
-        45deg,
-        var(--paper-2) 0 4px,
-        var(--paper) 4px 8px
-      );
+      background:
+        linear-gradient(135deg, transparent 0 45%, var(--line-2) 45% 55%, transparent 55%),
+        var(--bg-2);
     }
     .track .body { min-width: 0; }
     .track .name {
-      font-size: 16px;
+      font-size: 15px;
       font-weight: 500;
-      letter-spacing: -0.012em;
+      letter-spacing: -0.01em;
+      color: var(--ink);
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
     }
     .track .meta {
-      color: var(--muted);
-      font-size: 14px;
-      margin-top: 1px;
+      color: var(--ink-3);
+      font-size: 13px;
+      margin-top: 2px;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
     }
     .track .album { color: var(--muted); }
     .track .features {
-      margin-top: 4px;
-      font-family: "JetBrains Mono", monospace;
-      font-size: 12px;
-      color: var(--ink-2);
-      letter-spacing: 0;
+      margin-top: 6px;
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 11px;
+      color: var(--muted);
+      letter-spacing: 0.02em;
       display: flex;
       flex-wrap: wrap;
-      gap: 8px 12px;
+      gap: 4px 10px;
     }
-    .track .features span b { font-weight: 500; color: var(--ink); }
+    .track .features span b { font-weight: 500; color: var(--ink-2); }
     .track .features span.sep { color: var(--line-2); }
     .track .open {
-      color: var(--muted);
-      font-size: 13px;
+      color: var(--ink-3);
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 11px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
       text-decoration: none;
       padding: 6px 10px;
-      border-radius: 8px;
-      border: 1px solid transparent;
-      transition: color 120ms, border-color 120ms;
+      border-radius: var(--r-xs);
+      border: 1px solid var(--line);
+      background: var(--bg);
+      transition: color 120ms, border-color 120ms, background 120ms;
       white-space: nowrap;
     }
-    .track .open:hover { color: var(--ink); border-color: var(--line-2); }
+    .track .open:hover { color: var(--accent); border-color: var(--accent); background: var(--accent-soft); }
     .track .open:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
-    .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+    .chips { display: flex; flex-wrap: wrap; gap: 6px; }
     .chip {
       appearance: none;
       display: inline-flex;
       align-items: center;
       gap: 8px;
-      padding: 7px 12px;
-      background: var(--paper-2);
+      padding: 6px 11px;
+      background: transparent;
       border: 1px solid var(--line);
-      border-radius: 999px;
-      font-family: inherit;
-      font-size: 13px;
-      color: var(--ink-2);
+      border-radius: var(--r-xs);
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 11px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--ink-3);
       cursor: pointer;
       transition: color 120ms, border-color 120ms, background 120ms;
     }
-    .chip:hover { color: var(--ink); border-color: var(--ink-2); }
+    .chip:hover { color: var(--ink); border-color: var(--ink-3); }
     .chip:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-    .chip.active { background: var(--accent); color: var(--paper); border-color: var(--accent); }
+    .chip.active { background: var(--ink); color: var(--bg); border-color: var(--ink); }
 
     .empty, .info, .error {
       padding: 16px 4px;
       color: var(--muted);
       font-size: 14px;
     }
-    .error { color: var(--accent); }
+    .error { color: var(--warn); }
     .info code {
-      background: var(--paper-2);
+      background: var(--bg-2);
       padding: 1px 6px;
       border-radius: 4px;
       font-size: 13px;
     }
-    .info--compact { padding: 0; color: var(--muted); font-size: 13px; }
+    .info--compact { padding: 0; color: var(--muted); font-size: 12px; font-family: "IBM Plex Mono", monospace; letter-spacing: 0.02em; }
     .empty-presets { margin-top: 12px; display: flex; flex-wrap: wrap; gap: 6px; }
 
     .error-wrap {
       display: flex;
       align-items: center;
       gap: 12px;
-      padding: 16px 4px;
+      padding: 14px 14px;
+      border: 1px solid var(--warn);
+      background: color-mix(in srgb, var(--warn) 8%, transparent);
+      border-radius: var(--r-sm);
       flex-wrap: wrap;
+      margin: 8px 0;
     }
-    .error-msg { color: var(--accent); font-size: 14px; }
+    .error-msg { color: var(--warn); font-size: 13px; font-family: "IBM Plex Mono", monospace; }
     .error-retry {
       appearance: none;
       background: transparent;
-      border: 1px solid var(--accent);
-      color: var(--accent);
-      font-family: inherit;
-      font-size: 13px;
-      padding: 4px 10px;
-      border-radius: var(--r-sm);
+      border: 1px solid var(--warn);
+      color: var(--warn);
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 11px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      padding: 5px 10px;
+      border-radius: var(--r-xs);
       cursor: pointer;
       transition: background 120ms, color 120ms;
     }
-    .error-retry:hover { background: var(--accent); color: var(--paper); }
-    .error-retry:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    .error-retry:hover { background: var(--warn); color: var(--bg); }
+    .error-retry:focus-visible { outline: 2px solid var(--warn); outline-offset: 2px; }
 
     .skel {
-      background: linear-gradient(90deg, var(--paper-2) 0%, var(--line) 50%, var(--paper-2) 100%);
+      background: linear-gradient(90deg, var(--bg-2) 0%, var(--line) 50%, var(--bg-2) 100%);
       background-size: 200% 100%;
       animation: shimmer 1.4s linear infinite;
-      border-radius: 6px;
+      border-radius: 4px;
     }
     @keyframes shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
     @media (prefers-reduced-motion: reduce) {
@@ -323,19 +404,21 @@
     }
 
     .demo-banner {
-      font-family: "JetBrains Mono", monospace;
-      font-size: 12px;
-      padding: 8px 16px;
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 11px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      padding: 9px 14px;
       background: var(--accent-soft);
       color: var(--accent-ink);
-      border: 1px solid var(--accent);
-      border-radius: var(--r-sm);
+      border-left: 3px solid var(--accent);
+      border-radius: 0 var(--r-xs) var(--r-xs) 0;
       display: inline-flex;
       align-items: center;
-      gap: 8px;
-      margin-bottom: 14px;
+      gap: 10px;
+      margin-bottom: 18px;
     }
-    .demo-dot { width: 6px; height: 6px; border-radius: 999px; background: var(--accent); flex-shrink: 0; }
+    .demo-dot { width: 6px; height: 6px; background: var(--accent); flex-shrink: 0; }
 
     .mood-wrap {
       display: grid;
@@ -353,10 +436,11 @@
       width: 100%;
       max-width: 420px;
       border: 1px solid var(--line);
-      border-radius: var(--r-md);
+      border-radius: 0;
       background:
-        radial-gradient(circle, var(--line) 1px, transparent 1px) 0 0 / 24px 24px,
-        var(--paper-2);
+        linear-gradient(var(--line) 1px, transparent 1px) 0 0 / 100% 12.5%,
+        linear-gradient(90deg, var(--line) 1px, transparent 1px) 0 0 / 12.5% 100%,
+        var(--bg);
       padding: 28px;
       box-sizing: border-box;
     }
@@ -369,13 +453,12 @@
     .mood-plane svg:focus-visible {
       outline: 2px solid var(--accent);
       outline-offset: 3px;
-      border-radius: calc(var(--r-md) - 4px);
     }
     .mood-axis-label {
       position: absolute;
-      font-family: "JetBrains Mono", monospace;
+      font-family: "IBM Plex Mono", monospace;
       font-size: 10px;
-      letter-spacing: 0.06em;
+      letter-spacing: 0.10em;
       text-transform: uppercase;
       color: var(--muted);
       pointer-events: none;
@@ -384,6 +467,18 @@
     .mood-axis-label.bottom { bottom: 8px; left: 50%; transform: translateX(-50%); }
     .mood-axis-label.left   { left: 8px;   top: 50%;  transform: translateY(-50%) rotate(-90deg); transform-origin: left center; }
     .mood-axis-label.right  { right: 8px;  top: 50%;  transform: translateY(-50%) rotate(90deg);  transform-origin: right center; }
+    .mood-axis-corner {
+      position: absolute;
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 9px;
+      color: var(--muted);
+      letter-spacing: 0.04em;
+      pointer-events: none;
+    }
+    .mood-axis-corner.tl { top: 6px; left: 8px; }
+    .mood-axis-corner.tr { top: 6px; right: 8px; }
+    .mood-axis-corner.bl { bottom: 6px; left: 8px; }
+    .mood-axis-corner.br { bottom: 6px; right: 8px; }
 
     .plane-wrap { position: relative; }
     .seed-overlay {
@@ -392,11 +487,11 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      background: var(--paper-2);
-      border-radius: var(--r-md);
-      opacity: 0.9;
-      font-family: "JetBrains Mono", monospace;
-      font-size: 12px;
+      background: color-mix(in srgb, var(--bg) 85%, transparent);
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 11px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
       color: var(--muted);
     }
 
@@ -407,118 +502,147 @@
       min-width: 0;
     }
     .mood-coord {
-      font-family: "JetBrains Mono", monospace;
-      font-size: 13px;
-      color: var(--ink-2);
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 12px;
+      letter-spacing: 0.02em;
+      color: var(--ink-3);
+      padding: 12px 14px;
+      background: var(--bg-2);
+      border: 1px solid var(--line);
+      border-radius: var(--r-sm);
     }
-    .mood-coord b { color: var(--ink); font-weight: 500; }
+    .mood-coord b { color: var(--ink); font-weight: 600; }
     .mood-presets { display: flex; flex-wrap: wrap; gap: 6px; }
     .mood-preset {
       appearance: none;
-      background: var(--paper-2);
+      background: transparent;
       border: 1px solid var(--line);
-      color: var(--ink-2);
-      font-family: inherit;
-      font-size: 12px;
-      padding: 5px 10px;
-      border-radius: 999px;
+      color: var(--ink-3);
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 11px;
+      letter-spacing: 0.02em;
+      padding: 5px 9px;
+      border-radius: var(--r-xs);
       cursor: pointer;
-      transition: color 120ms, border-color 120ms;
+      transition: color 120ms, border-color 120ms, background 120ms;
     }
-    .mood-preset:hover { color: var(--ink); border-color: var(--ink-2); }
+    .mood-preset:hover { color: var(--ink); border-color: var(--accent); background: var(--accent-soft); }
     .mood-preset:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
-    .genre-section { margin-bottom: 20px; }
+    .genre-section { margin-bottom: 22px; }
     .genre-label {
-      font-size: 11px;
-      letter-spacing: 0.12em;
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 10px;
+      letter-spacing: 0.14em;
       text-transform: uppercase;
       color: var(--muted);
-      margin-bottom: 8px;
-      font-weight: 600;
+      margin-bottom: 10px;
+      font-weight: 500;
     }
 
     .tab-bar {
       display: flex;
-      gap: 2px;
-      border-bottom: 1px solid var(--line);
+      gap: 0;
       margin-bottom: 32px;
+      border: 1px solid var(--line);
+      border-radius: var(--r-sm);
+      padding: 3px;
+      background: var(--bg-2);
+      width: fit-content;
     }
     .tab {
       appearance: none;
       background: transparent;
       border: none;
-      border-bottom: 2px solid transparent;
-      margin-bottom: -1px;
-      padding: 9px 18px;
-      font-family: inherit;
-      font-size: 14px;
+      padding: 8px 18px;
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 11px;
       font-weight: 500;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
       color: var(--muted);
       cursor: pointer;
-      transition: color 120ms, border-color 120ms;
-      letter-spacing: -0.01em;
+      transition: color 120ms, background 120ms;
+      border-radius: var(--r-xs);
     }
     .tab:hover { color: var(--ink); }
-    .tab.tab-active { color: var(--ink); border-bottom-color: var(--accent); }
-    .tab:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+    .tab.tab-active { color: var(--ink); background: var(--bg); box-shadow: 0 1px 2px rgba(0,0,0,0.04); }
+    .tab:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
     .search-form {
       display: flex;
-      gap: 10px;
+      gap: 8px;
       margin-bottom: 28px;
+      padding: 4px;
+      border: 1px solid var(--line);
+      border-radius: var(--r-sm);
+      background: var(--surface);
+      transition: border-color 120ms, box-shadow 120ms;
     }
+    :root[data-theme="dark"] .search-form { background: var(--bg-2); }
+    .search-form:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px var(--focus-ring); }
     .search-input {
       flex: 1;
       appearance: none;
       font-family: inherit;
       font-size: 15px;
-      padding: 10px 14px;
-      background: var(--paper-2);
-      border: 1px solid var(--line);
-      border-radius: var(--r-md);
+      padding: 8px 12px;
+      background: transparent;
+      border: none;
       color: var(--ink);
-      transition: border-color 120ms, box-shadow 120ms;
       min-width: 0;
     }
     .search-input::placeholder { color: var(--muted); }
-    .search-input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--focus-ring); }
+    .search-input:focus { outline: none; }
     .search-btn {
       appearance: none;
-      background: var(--accent);
-      color: var(--paper);
+      background: var(--ink);
+      color: var(--bg);
       border: none;
-      border-radius: var(--r-md);
-      font-family: inherit;
-      font-size: 14px;
+      border-radius: var(--r-xs);
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 11px;
       font-weight: 600;
-      padding: 10px 22px;
+      letter-spacing: 0.10em;
+      text-transform: uppercase;
+      padding: 9px 18px;
       cursor: pointer;
       white-space: nowrap;
-      transition: opacity 120ms;
-      letter-spacing: -0.01em;
+      transition: background 120ms;
     }
-    .search-btn:hover { opacity: 0.88; }
-    .search-btn:disabled { opacity: 0.45; cursor: not-allowed; }
-    .search-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: var(--r-sm); }
+    .search-btn:hover { background: var(--accent); color: var(--bg); }
+    .search-btn:disabled { opacity: 0.40; cursor: not-allowed; background: var(--ink); }
+    .search-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
     .search-found { margin-bottom: 20px; }
     .search-found-label {
-      font-size: 11px;
-      letter-spacing: 0.12em;
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 10px;
+      letter-spacing: 0.14em;
       text-transform: uppercase;
-      color: var(--muted);
-      margin-bottom: 6px;
+      color: var(--accent);
+      margin-bottom: 8px;
       font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .search-found-label::before {
+      content: "";
+      width: 14px; height: 1px;
+      background: var(--accent);
     }
     .track.highlight {
       background: var(--accent-soft);
-      border: 1px solid color-mix(in oklch, var(--accent) 35%, transparent);
+      border-left: 3px solid var(--accent);
+      padding-left: 13px;
     }
-    .track.highlight .idx { color: var(--accent); opacity: 1; }
+    .track.highlight .idx { color: var(--accent); }
+    .track.highlight .name { color: var(--accent-ink); }
+    :root[data-theme="dark"] .track.highlight .name { color: var(--accent-ink); }
 
     .upload-card {
-      background: var(--paper-2);
+      background: var(--bg-2);
       border: 1px solid var(--line);
       border-radius: var(--r-sm);
       padding: 10px 12px;
@@ -528,7 +652,7 @@
       min-width: 0;
     }
     .upload-card-name {
-      font-size: 14px;
+      font-size: 13px;
       font-weight: 500;
       color: var(--ink);
       white-space: nowrap;
@@ -536,26 +660,29 @@
       text-overflow: ellipsis;
     }
     .upload-card-feat {
-      font-family: "JetBrains Mono", monospace;
-      font-size: 12px;
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 11px;
       color: var(--muted);
-      letter-spacing: 0;
+      letter-spacing: 0.02em;
     }
     .upload-card-feat b { color: var(--ink-2); font-weight: 500; }
 
     .foot {
-      margin-top: 48px;
+      margin-top: 56px;
       padding-top: 18px;
       border-top: 1px solid var(--line);
       color: var(--muted);
-      font-size: 13px;
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 11px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
       display: flex;
       justify-content: space-between;
       flex-wrap: wrap;
       gap: 8px;
     }
-    .foot a { color: var(--ink-2); text-decoration: none; }
-    .foot a:hover { color: var(--ink); }
+    .foot a { color: var(--ink-3); text-decoration: none; }
+    .foot a:hover { color: var(--accent); }
   </style>
 </head>
 <body>
@@ -573,11 +700,11 @@
 
     function friendlyError(err) {
       if (!err) return "Search failed.";
-      if (err.status === 429) return "Spotify's rate limit was hit — wait a moment and try again.";
-      if (err.status === 503 || err.status === 502) return "The server is temporarily unavailable. Reload and try again.";
-      if (err.status >= 500) return "Something went wrong on our end. Reload and try again.";
-      if (err.status === 404) return "That resource wasn't found.";
-      return err.message || "Search failed.";
+      if (err.status === 429) return "Throttled — wait a beat and try again.";
+      if (err.status === 503 || err.status === 502) return "Server's catching its breath. Reload and try again.";
+      if (err.status >= 500) return "Something snapped on our end. Reload and try again.";
+      if (err.status === 404) return "Nothing here by that name.";
+      return err.message || "Probe failed.";
     }
 
     const DEMO_TRACKS = [
@@ -623,11 +750,11 @@
     ];
 
     const MOOD_PRESETS = [
-      { label: "Calm + sad",      v: 0.25, e: 0.20 },
-      { label: "Calm + happy",    v: 0.75, e: 0.25 },
-      { label: "Intense + sad",   v: 0.20, e: 0.80 },
-      { label: "Intense + happy", v: 0.80, e: 0.85 },
-      { label: "Center",          v: 0.50, e: 0.50 },
+      { label: "Still + heavy",  v: 0.25, e: 0.20 },
+      { label: "Still + bright", v: 0.75, e: 0.25 },
+      { label: "Wired + heavy",  v: 0.20, e: 0.80 },
+      { label: "Wired + bright", v: 0.80, e: 0.85 },
+      { label: "Dead center",    v: 0.50, e: 0.50 },
     ];
 
     async function safeFetch(url, opts) {
@@ -664,18 +791,11 @@
         <div className="shell">
           <header className="topbar">
             <div className="brand">
-              <div className="brand-mark" aria-hidden="true">
-                <svg width="18" height="14" viewBox="0 0 18 14" fill="currentColor">
-                  <rect x="0"  y="5"  width="2" height="4"  rx="1"/>
-                  <rect x="4"  y="2"  width="2" height="10" rx="1"/>
-                  <rect x="8"  y="0"  width="2" height="14" rx="1"/>
-                  <rect x="12" y="3"  width="2" height="8"  rx="1"/>
-                  <rect x="16" y="6"  width="2" height="3"  rx="1"/>
-                </svg>
-              </div>
-              <div>Tonecard <small>· mood discovery</small></div>
+              <div className="brand-mark" aria-hidden="true"></div>
+              <div>TONECARD <small>v0.4 · sound coordinates</small></div>
             </div>
             <div className="spacer"></div>
+            <span className="build-tag">online · audio engine</span>
             <button
               className="theme-toggle"
               onClick={toggleTheme}
@@ -702,19 +822,19 @@
               className={"tab" + (tab === "mood" ? " tab-active" : "")}
               onClick={() => setTab("mood")}
               aria-current={tab === "mood" ? "page" : undefined}
-            >Mood</button>
+            >Atlas</button>
             <button
               className={"tab" + (tab === "search" ? " tab-active" : "")}
               onClick={() => setTab("search")}
               aria-current={tab === "search" ? "page" : undefined}
-            >Search</button>
+            >Lookup</button>
           </nav>
 
           {tab === "mood" ? <MoodTab /> : <SearchTab />}
 
           <footer className="foot">
-            <div>Audio features via ReccoBeats. Catalog by Spotify Web API.</div>
-            <div>Tonecard · public mood discovery</div>
+            <div>Signal · ReccoBeats / Spotify Web API</div>
+            <div>Tonecard · cartography for songs</div>
           </footer>
         </div>
       );
@@ -722,11 +842,11 @@
 
     const DEMO_SEARCH = {
       track: {
-        id: "demo-found", name: "Blinding Lights", artists: ["The Weeknd"],
-        album: "After Hours", popularity: 95, image: null, url: null,
+        id: "demo-found", name: "Sample Track", artists: ["Demo Artist"],
+        album: "Demo Album", popularity: 95, image: null, url: null,
         features: { valence: 0.335, energy: 0.730, tempo: 171.0, danceability: 0.514 },
       },
-      genre: "canadian pop",
+      genre: "demo pop",
       similar: DEMO_TRACKS.slice(0, 5).map((t, i) => ({
         ...t, id: "ds" + i,
         features: { valence: DEMO_FEAT[i].valence, energy: DEMO_FEAT[i].energy, tempo: DEMO_FEAT[i].tempo, danceability: DEMO_FEAT[i].danceability },
@@ -816,15 +936,15 @@
           <div className="sr-only" aria-live="polite" aria-atomic="true">{announcement}</div>
 
           <div className="hero">
-            <div className="eyebrow">Search</div>
-            <h1 className="display">Find a <em>song</em>, discover similar.</h1>
-            <p className="lede">Search any track — we'll pinpoint its mood and surface similar songs from its genre via ReccoBeats.</p>
+            <div className="eyebrow">02 · Lookup</div>
+            <h1 className="display">Name a song. <strong>Hear its kin.</strong></h1>
+            <p className="lede">Type any track. We fix its coordinates on the plane and pull back neighbors riding the same wavelength.</p>
           </div>
 
           {demoMode && (
             <div className="demo-banner" role="alert">
               <span className="demo-dot" aria-hidden="true" />
-              Sample data only · server unreachable. Results below are not real.
+              Offline demo · server didn't answer
             </div>
           )}
 
@@ -832,13 +952,13 @@
             <input
               className="search-input"
               type="search"
-              placeholder="e.g. Blinding Lights, Bohemian Rhapsody, Lose Yourself…"
+              placeholder="Type a title or artist…"
               value={query}
               onChange={e => setQuery(e.target.value)}
               aria-label="Search for a song"
             />
             <button className="search-btn" type="submit" disabled={loading || !query.trim()}>
-              {loading ? "Searching…" : "Search"}
+              {loading ? "Probing…" : "Probe"}
             </button>
           </form>
 
@@ -854,7 +974,7 @@
           {!loading && result && (
             <>
               <div className="search-found">
-                <div className="search-found-label">Found</div>
+                <div className="search-found-label">Target</div>
                 <div className="results">
                   <TrackRow t={result.track} i={-1} showFeatures demoMode={demoMode} highlight />
                 </div>
@@ -872,18 +992,18 @@
                 <div className="mood-side">
                   <div className="mood-coord">
                     {atFoundTrack
-                      ? <span>Your song · <b>valence {point.valence.toFixed(2)}</b> · <b>energy {point.energy.toFixed(2)}</b></span>
-                      : <span>Picked <b>valence {point.valence.toFixed(2)}</b> · <b>energy {point.energy.toFixed(2)}</b></span>
+                      ? <span>Your track · v <b>{point.valence.toFixed(2)}</b> / e <b>{point.energy.toFixed(2)}</b></span>
+                      : <span>Pinned · v <b>{point.valence.toFixed(2)}</b> / e <b>{point.energy.toFixed(2)}</b></span>
                     }
                   </div>
                   {result.genre && (
-                    <div className="info--compact">Genre pool: <span className="mono">{result.genre}</span></div>
+                    <div className="info--compact">pool · <span style={{color:"var(--ink-2)"}}>{result.genre}</span></div>
                   )}
                   <div className="info--compact">
-                    Showing <span className="mono">{similar.length}</span> of <span className="mono">{result.candidate_count}</span> candidates.
+                    showing <span style={{color:"var(--ink-2)"}}>{similar.length}</span> / <span style={{color:"var(--ink-2)"}}>{result.candidate_count}</span> candidates
                   </div>
                   <div className="info--compact" style={{color: "var(--muted)"}}>
-                    Click anywhere on the plane to explore the genre.
+                    drop a new pin to explore the genre.
                   </div>
                 </div>
               </div>
@@ -895,9 +1015,9 @@
               )}
 
               <h2>
-                {atFoundTrack ? "Similar songs" : "Tracks near this mood"}
-                {result.genre ? <> in <span style={{textTransform:"none", letterSpacing:0, fontWeight:400}}>{result.genre}</span></> : ""}
-                <span className="count"> · {similar.length}</span>
+                {atFoundTrack ? "In the neighborhood" : "Nearby on the plane"}
+                {result.genre ? <span style={{color:"var(--muted)"}}> · {result.genre}</span> : null}
+                <span className="count">{similar.length} results</span>
               </h2>
 
               {similarLoading && <SkeletonList n={4} withFeatures />}
@@ -961,10 +1081,14 @@
 
       return (
         <div className="mood-plane">
-          <div className="mood-axis-label top" aria-hidden="true">Intense</div>
-          <div className="mood-axis-label bottom" aria-hidden="true">Calm</div>
-          <div className="mood-axis-label left" aria-hidden="true">Sad</div>
-          <div className="mood-axis-label right" aria-hidden="true">Happy</div>
+          <div className="mood-axis-corner tl" aria-hidden="true">0,1</div>
+          <div className="mood-axis-corner tr" aria-hidden="true">1,1</div>
+          <div className="mood-axis-corner bl" aria-hidden="true">0,0</div>
+          <div className="mood-axis-corner br" aria-hidden="true">1,0</div>
+          <div className="mood-axis-label top" aria-hidden="true">↑ Charged</div>
+          <div className="mood-axis-label bottom" aria-hidden="true">↓ Still</div>
+          <div className="mood-axis-label left" aria-hidden="true">← Heavy</div>
+          <div className="mood-axis-label right" aria-hidden="true">→ Bright</div>
           <svg
             viewBox={`0 0 ${SIZE} ${SIZE}`}
             onClick={handleClick}
@@ -976,17 +1100,17 @@
             aria-label="Mood plane. Use arrow keys to move the cursor, Enter or Space to search. Left and right adjust happiness, up and down adjust energy. Hold Shift for larger steps."
           >
             <rect x="0" y="0" width={SIZE} height={SIZE} fill="transparent" />
-            <line x1={SIZE/2} y1="0" x2={SIZE/2} y2={SIZE} stroke="var(--accent)" strokeOpacity="0.15" strokeDasharray="4 4" />
-            <line x1="0" y1={SIZE/2} x2={SIZE} y2={SIZE/2} stroke="var(--accent)" strokeOpacity="0.15" strokeDasharray="4 4" />
+            <line x1={SIZE/2} y1="0" x2={SIZE/2} y2={SIZE} stroke="var(--accent)" strokeOpacity="0.20" strokeDasharray="2 4" />
+            <line x1="0" y1={SIZE/2} x2={SIZE} y2={SIZE/2} stroke="var(--accent)" strokeOpacity="0.20" strokeDasharray="2 4" />
 
             {(points || []).map((p, i) => (
               <circle
                 key={p.id || i}
                 cx={p.valence * SIZE}
                 cy={(1 - p.energy) * SIZE}
-                r="4"
-                fill="var(--ink-2)"
-                fillOpacity="0.45"
+                r="3.5"
+                fill="var(--ink-3)"
+                fillOpacity="0.55"
               >
                 <title>{p.name}{p.artists && p.artists.length ? " · " + p.artists.join(", ") : ""}</title>
               </circle>
@@ -997,21 +1121,27 @@
                 <circle
                   cx={point.valence * SIZE}
                   cy={(1 - point.energy) * SIZE}
-                  r="9"
+                  r="10"
                   fill="var(--accent)"
-                  fillOpacity="0.25"
+                  fillOpacity="0.15"
                   stroke="var(--accent)"
-                  strokeWidth="2"
+                  strokeWidth="1.5"
                 />
                 <line
-                  x1={point.valence * SIZE - 14} y1={(1 - point.energy) * SIZE}
-                  x2={point.valence * SIZE + 14} y2={(1 - point.energy) * SIZE}
+                  x1={point.valence * SIZE - 16} y1={(1 - point.energy) * SIZE}
+                  x2={point.valence * SIZE + 16} y2={(1 - point.energy) * SIZE}
                   stroke="var(--accent)" strokeWidth="1"
                 />
                 <line
-                  x1={point.valence * SIZE} y1={(1 - point.energy) * SIZE - 14}
-                  x2={point.valence * SIZE} y2={(1 - point.energy) * SIZE + 14}
+                  x1={point.valence * SIZE} y1={(1 - point.energy) * SIZE - 16}
+                  x2={point.valence * SIZE} y2={(1 - point.energy) * SIZE + 16}
                   stroke="var(--accent)" strokeWidth="1"
+                />
+                <circle
+                  cx={point.valence * SIZE}
+                  cy={(1 - point.energy) * SIZE}
+                  r="2"
+                  fill="var(--accent)"
                 />
               </g>
             )}
@@ -1021,7 +1151,7 @@
                 <circle
                   cx={kPos.valence * SIZE}
                   cy={(1 - kPos.energy) * SIZE}
-                  r="7"
+                  r="8"
                   fill="none"
                   stroke="var(--accent)"
                   strokeWidth="1.5"
@@ -1033,12 +1163,12 @@
 
             {point && pointLabel && (
               <text
-                x={Math.min(point.valence * SIZE + 14, SIZE - 90)}
-                y={Math.max((1 - point.energy) * SIZE + 16, 14)}
+                x={Math.min(point.valence * SIZE + 16, SIZE - 90)}
+                y={Math.max((1 - point.energy) * SIZE + 18, 14)}
                 fill="var(--accent)"
                 fontSize="10"
-                fontFamily="'JetBrains Mono', monospace"
-                opacity="0.85"
+                fontFamily="'IBM Plex Mono', monospace"
+                opacity="0.95"
                 pointerEvents="none"
                 aria-hidden="true"
               >{pointLabel}</text>
@@ -1047,7 +1177,6 @@
         </div>
       );
     }
-
 
     function MoodTab() {
       const [genre, setGenre] = useState(null);
@@ -1161,29 +1290,29 @@
 
       const coordText = point
         ? uploadResult
-          ? <span>Your track · <b>valence {point.valence.toFixed(2)}</b> · <b>energy {point.energy.toFixed(2)}</b></span>
-          : <span>Picked <b>valence {point.valence.toFixed(2)}</b> · <b>energy {point.energy.toFixed(2)}</b></span>
-        : <span>Click anywhere on the plane to search{genre ? ` in ${genre}` : " a mood"}, or <b>↑ upload</b> a track.</span>;
+          ? <span>Your track · v <b>{point.valence.toFixed(2)}</b> / e <b>{point.energy.toFixed(2)}</b></span>
+          : <span>Pinned · v <b>{point.valence.toFixed(2)}</b> / e <b>{point.energy.toFixed(2)}</b></span>
+        : <span>Tap the plane to drop a pin{genre ? ` in ${genre}` : ""}, or feed it a track.</span>;
 
       return (
         <section>
           <div className="sr-only" aria-live="polite" aria-atomic="true">{announcement}</div>
 
           <div className="hero">
-            <div className="eyebrow">Mood</div>
-            <h1 className="display">Pick a <em>mood</em>, find tracks.</h1>
-            <p className="lede">Choose a genre to plot its tracks, then click anywhere on the plane: we surface the closest matches by valence and energy via ReccoBeats.</p>
+            <div className="eyebrow">01 · Atlas</div>
+            <h1 className="display">Drop a pin. <strong>Hear the field.</strong></h1>
+            <p className="lede">Pick a genre to scatter real tracks across the plane. Click anywhere and we'll pull the nearest songs by feel.</p>
           </div>
 
           {demoMode && (
             <div className="demo-banner" role="alert">
               <span className="demo-dot" aria-hidden="true" />
-              Sample data only · server unreachable. Results below are not real.
+              Offline demo · server didn't answer
             </div>
           )}
 
           <div className="genre-section">
-            <div className="genre-label">Genre</div>
+            <div className="genre-label">Filter by sound</div>
             <div className="chips">
               {GENRES.map(g => (
                 <button
@@ -1240,7 +1369,7 @@
                 <div className="upload-card">
                   <div className="upload-card-name">{uploadResult.filename}</div>
                   <div className="upload-card-feat">
-                    valence <b>{uploadResult.valence}</b> · energy <b>{uploadResult.energy}</b> · <b>{uploadResult.tempo}</b> BPM
+                    v <b>{uploadResult.valence}</b> · e <b>{uploadResult.energy}</b> · <b>{uploadResult.tempo}</b> bpm
                   </div>
                 </div>
               )}
@@ -1256,7 +1385,7 @@
               </div>
               {results && (
                 <div className="info--compact">
-                  Showing <span className="mono">{(results.recommendations || []).length}</span> nearby tracks of <span className="mono">{results.candidate_count || 0}</span> candidates.
+                  showing <span style={{color:"var(--ink-2)"}}>{(results.recommendations || []).length}</span> / <span style={{color:"var(--ink-2)"}}>{results.candidate_count || 0}</span> candidates
                 </div>
               )}
             </div>
@@ -1273,7 +1402,10 @@
           {loading && <SkeletonList n={4} />}
           {!loading && results && (
             <>
-              <h2>Tracks near this mood <span className="count">· {results.recommendations.length}</span></h2>
+              <h2>
+                Tracks near this mood
+                <span className="count">{results.recommendations.length} results</span>
+              </h2>
               {results.recommendations.length === 0
                 ? (
                   <div className="empty">
@@ -1301,12 +1433,12 @@
     function TrackRow({ t, i, showFeatures, demoMode, highlight }) {
       const f = t.features || {};
       const featurePieces = [];
-      if (f.tempo)        featurePieces.push(<span key="t"><b>{f.tempo}</b> BPM</span>);
+      if (f.tempo)        featurePieces.push(<span key="t"><b>{f.tempo}</b> bpm</span>);
       if (f.key != null)  featurePieces.push(<span key="k"><b>{keyLabel(f.key, f.mode)}</b></span>);
-      if (f.energy != null)       featurePieces.push(<span key="e">energy <b>{f.energy}</b></span>);
-      if (f.danceability != null) featurePieces.push(<span key="d">dance <b>{f.danceability}</b></span>);
-      if (f.valence != null)      featurePieces.push(<span key="v">valence <b>{f.valence}</b></span>);
-      if (f.acousticness != null) featurePieces.push(<span key="a">acoustic <b>{f.acousticness}</b></span>);
+      if (f.energy != null)       featurePieces.push(<span key="e">e <b>{f.energy}</b></span>);
+      if (f.danceability != null) featurePieces.push(<span key="d">d <b>{f.danceability}</b></span>);
+      if (f.valence != null)      featurePieces.push(<span key="v">v <b>{f.valence}</b></span>);
+      if (f.acousticness != null) featurePieces.push(<span key="a">ac <b>{f.acousticness}</b></span>);
 
       return (
         <div className={"track" + (highlight ? " highlight" : "")}>
@@ -1337,13 +1469,13 @@
           {Array.from({length: n}).map((_, i) => (
             <div key={i} className="track" style={{pointerEvents: "none"}}>
               <div className="idx mono">{String(i+1).padStart(2,"0")}</div>
-              <div className="skel" style={{width: 60, height: 60, borderRadius: 10}} />
+              <div className="skel" style={{width: 56, height: 56, borderRadius: 6}} />
               <div className="body" style={{display: "flex", flexDirection: "column", gap: 6}}>
-                <div className="skel" style={{height: 14, width: "55%"}} />
-                <div className="skel" style={{height: 12, width: "35%"}} />
-                {withFeatures && <div className="skel" style={{height: 10, width: "70%"}} />}
+                <div className="skel" style={{height: 13, width: "55%"}} />
+                <div className="skel" style={{height: 11, width: "35%"}} />
+                {withFeatures && <div className="skel" style={{height: 9, width: "65%"}} />}
               </div>
-              <div className="skel" style={{width: 56, height: 22, borderRadius: 6}} />
+              <div className="skel" style={{width: 52, height: 20, borderRadius: 4}} />
             </div>
           ))}
         </div>
