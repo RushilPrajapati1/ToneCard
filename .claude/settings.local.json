@@ -27,7 +27,10 @@
       "Bash(git push *)",
       "PowerShell(Get-Process -Name python -ErrorAction SilentlyContinue | Where-Object { $_.MainWindowTitle -eq \"\" } | Stop-Process -Force -Confirm:$false -ErrorAction SilentlyContinue; Write-Host \"Done clearing old processes\")",
       "PowerShell(Get-Process -Name python -ErrorAction SilentlyContinue)",
-      "PowerShell(Stop-Process -Force -Confirm:$false -ErrorAction SilentlyContinue)"
+      "PowerShell(Stop-Process -Force -Confirm:$false -ErrorAction SilentlyContinue)",
+      "Bash(Get-ChildItem -Path \"c:\\\\Users\\\\rushi\\\\vscode projects\\\\Spotifiy_Vibe\" -Recurse -File)",
+      "Bash(Select-Object FullName)",
+      "Bash(Format-Table -HideTableHeaders)"
     ]
   }
 }
