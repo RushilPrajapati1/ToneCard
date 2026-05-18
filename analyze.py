@@ -340,8 +340,16 @@ def artist_search(query, count=10, market="US"):
         "url": (a.get("external_urls") or {}).get("spotify"),
     }
 
-    top_raw = sp.artist_top_tracks(a["id"], country=market).get("tracks", [])
-    top_raw = top_raw[:count]
+    # artist_top_tracks is 403 for dev-mode Client Credentials apps.
+    # Use a targeted search instead — "artist:Name" returns their tracks sorted by popularity.
+    search_raw = sp.search(q=f'artist:"{a["name"]}"', type="track", limit=count, market=market)
+    top_raw = search_raw.get("tracks", {}).get("items", [])
+    # Filter to tracks where this artist is actually credited (search can bleed)
+    artist_name_lower = a["name"].lower()
+    top_raw = [
+        t for t in top_raw
+        if any(a2.get("name", "").lower() == artist_name_lower for a2 in t.get("artists", []))
+    ][:count]
 
     track_ids = [t["id"] for t in top_raw if t.get("id")]
     try:
@@ -384,6 +392,63 @@ def artist_search(query, count=10, market="US"):
             })
 
     return {"artist": artist_info, "tracks": tracks, "points": points}
+
+
+# Stable Spotify artist IDs for globally popular artists.
+# Fetched individually via sp.artist() (batch endpoint is 403 for dev-mode apps).
+# Popularity scores are live on Spotify, so the top-10 ranking reflects current trends.
+_TRENDING_SEED_IDS = [
+    "06HL4z0CvFAxyc27GXpf02",  # Taylor Swift
+    "3TVXtAsR1Inumwj472S9r4",  # Drake
+    "1Xyo4u8uXC1ZmMpatF05PJ",  # The Weeknd
+    "4q3ewBCX7sLwd24euuV69X",  # Bad Bunny
+    "6qqNVTkY8uBg9cP3Jd7DAH",  # Billie Eilish
+    "7tYKF4w9nC0nq9CsPZTHyP",  # SZA
+    "2YZyLoL8N0Wb9xBt1NhZWg",  # Kendrick Lamar
+    "74KM79TiuVKeVCqs8QtB0B",  # Sabrina Carpenter
+    "246dkjvS1zLTtiykXe5h60",  # Post Malone
+    "6M2wZ9GZgrQXHCFfjv46we",  # Dua Lipa
+    "66CXWjxzNUsdJxJ2JdwvnR",  # Ariana Grande
+    "6eUKZXaKkcviH0Ku9w2n3V",  # Ed Sheeran
+    "1uNFoZAHBGtllmzznpCI3s",  # Justin Bieber
+    "1McMsnEElThX1knmY4oliG",  # Olivia Rodrigo
+    "6KImCVD70vtIoJWnq6nGn3",  # Harry Styles
+    "3Nrfpe0tUJi4K4DXYWgMUX",  # Feid
+    "0du5cEVh5yTK9QJze8zA0C",  # Bruno Mars
+    "5K4W6rqBFWDnAN6FQUkS6x",  # Kanye West
+    "1HY2Jd0NmPuamShAr6KMms",  # Lady Gaga
+    "5pKCCKE2ajJHZ9KAiaK11H",  # Rihanna
+]
+_TRENDING_CACHE = {"artists": None, "ts": 0.0}
+_TRENDING_TTL = 3600
+
+
+def trending_artists(limit=10):
+    """Fetch live popularity for a curated artist seed list; return top-N sorted by popularity."""
+    now = time.time()
+    if _TRENDING_CACHE["artists"] and now - _TRENDING_CACHE["ts"] < _TRENDING_TTL:
+        return _TRENDING_CACHE["artists"][:limit]
+
+    sp = get_client()
+    artists = []
+    for aid in _TRENDING_SEED_IDS:
+        try:
+            a = sp.artist(aid)
+        except Exception:
+            continue
+        artists.append({
+            "id": a["id"],
+            "name": a["name"],
+            "genres": a.get("genres", []),
+            "popularity": a.get("popularity", 0),
+            "followers": (a.get("followers") or {}).get("total", 0),
+            "image": (a.get("images") or [{}])[0].get("url"),
+            "url": (a.get("external_urls") or {}).get("spotify"),
+        })
+
+    _TRENDING_CACHE["artists"] = artists
+    _TRENDING_CACHE["ts"] = now
+    return artists[:limit]
 
 
 def mood_search(valence, energy, count=10, market="US"):

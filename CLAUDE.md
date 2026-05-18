@@ -16,14 +16,21 @@ A dark/light toggle sits in the topbar (persisted to `localStorage["tonecard-the
 
 1. **The app is public — Client Credentials only.** No OAuth, no user scopes, no `.cache-user`, no per-user data. If you're tempted to add a feature that requires the user's playlists, top tracks, library, or playback state, stop — that's a whole different app. Earlier iterations (My Music / Stats / per-playlist tools, then Search / Filter tabs) were deliberately removed; don't reintroduce them without an explicit ask.
 2. **Spotify's `/audio-features` is unavailable** for this app's dev-mode credentials (progressively restricted, big cut in Feb 2026). All audio features come from **ReccoBeats**. Never recommend `sp.audio_features()` or `/v1/audio-features` — it will 403.
-3. **Spotify's `/v1/tracks?ids=` batch endpoint is also 403 for dev-mode apps.** Current codepaths don't rely on it. If you ever need richer per-track metadata, prefer fields off the search result itself, or fan out single `sp.track(tid)` calls *very* sparingly — 8-worker parallel fan-out has rate-limited the whole app for ~100 minutes in the past.
+3. **These Spotify endpoints are all 403 for dev-mode Client Credentials apps** — do not use them:
+   - `/v1/tracks?ids=` (batch tracks)
+   - `/v1/artists?ids=` (batch artists)
+   - `/v1/artists/{id}/top-tracks` (artist top tracks — use `sp.search(type='track', q='artist:"Name"')` instead)
+   - `/v1/playlists/{id}/tracks` (playlist items)
+   - `/v1/browse/featured-playlists`
+   - `/v1/browse/new-releases`
+   Also, `sp.search(type='artist')` returns a stripped object with no `popularity`, `genres`, or `followers` — only `id`, `name`, `images`, `external_urls`. For full artist data use `sp.artist(id)` (single lookup only).
 4. **Spotipy is configured with `retries=0, status_retries=0, requests_timeout=10`** in `spotify_client.py`. This is intentional. Default spotipy will quietly sleep on a 429 for whatever the `Retry-After` header says (we saw 6101 s once), hanging the entire Flask request. With `retries=0`, 429s surface immediately and the UI shows the error inline. Don't change this without thinking it through.
 5. **The Flask dev server runs with `debug=False`** (bottom of `app.py`). Python file changes require restarting the process — they do not auto-reload. HTML/CSS/JSX changes only need a browser refresh (Babel standalone compiles in-browser).
 6. **DJ feature is not in the Web API.** If the user asks about Spotify DJ, the answer is "no public endpoint, never has been." Don't dig.
 
 ## Files and what they own
 
-- `app.py` — Flask routes only, no business logic. Seven routes:
+- `app.py` — Flask routes only, no business logic. Routes:
   - `/` — serves `static/index.html`
   - `/api/mood/seed` — returns the full seed pool as `{id, name, artists, valence, energy}` points
   - `/api/mood` — query params `valence`, `energy`, `count` (1–25), `market` (default US). Returns nearest tracks by mood.
@@ -31,6 +38,7 @@ A dark/light toggle sits in the topbar (persisted to `localStorage["tonecard-the
   - `/api/genre` — query params `genre`, `valence`, `energy`, `count`, `market`. Nearest tracks within genre pool.
   - `/api/search` — query params `q`, `count`, `market`. Find a song by name → returns target track, similar neighbors, genre pool visualization.
   - `/api/artist` — query params `q`, `count` (1–20), `market`. Find artist → returns artist profile, top tracks with features, mood plane points.
+  - `/api/artists/trending` — returns top 10 artists from a curated seed list (cached 1 hour).
   - `/api/upload/analyze` (POST) — upload audio file (mp3/wav/flac/ogg/m4a, max 30 MB). Returns estimated `{valence, energy, tempo}`.
 
 - `spotify_client.py` — single client-credentials Spotipy client. Includes proxy-env hardening (some local network setups break Spotify auth via global `HTTP_PROXY`/`NO_PROXY`).
@@ -43,7 +51,8 @@ A dark/light toggle sits in the topbar (persisted to `localStorage["tonecard-the
   - `mood_search(valence, energy, count, market)` — ranks mood pool by Euclidean distance; returns top `count` tracks with full metadata
   - `genre_search(valence, energy, genre, count, market)` — same as mood_search but within genre pool
   - `search_by_name(q, count, market)` — finds a track, extracts its features, loads its genre pool, returns target + similar neighbors + pool points
-  - `artist_search(query, count, market)` — finds artist, fetches top tracks, enriches with ReccoBeats, returns artist profile + tracks + mood plane points
+  - `artist_search(query, count, market)` — finds artist, searches for their tracks via `sp.search(type='track', q='artist:"Name"')` (NOT `artist_top_tracks` — that's 403), enriches with ReccoBeats, returns artist profile + tracks + mood plane points
+  - `trending_artists(limit)` — fetches 20 curated artist IDs via `sp.artist()` (single), caches 1 hour
   - `_fmt_track(t, f)` — shared track-formatting helper
 
 - `reccobeats.py` — ReccoBeats glue: `_chunked` (40-ID batches), `_spotify_to_reccobeats_map`, `_fetch_features`, `get_features_for_spotify_ids` (the only public function). ReccoBeats feature keys: `valence`, `energy`, `tempo`, `danceability`, `key`, `mode`, `acousticness`.
@@ -53,7 +62,9 @@ A dark/light toggle sits in the topbar (persisted to `localStorage["tonecard-the
   - **Tempo**: librosa beat tracking (BPM)
   - **Valence**: heuristic — `0.50 × mode_prob + 0.25 × tempo_factor + 0.25 × brightness` (Krumhansl major/minor profiles, tempo factor, spectral centroid 500–4500 Hz)
 
-- `static/index.html` — entire single-page React UI in one file. No build step, Babel standalone compiles in-browser. Components: `App`, `MoodTab`, `SearchTab`, `MoodPlane`, `ArtistView`, `TrackRow`, `SkeletonList`. Also contains all CSS and demo data (`DEMO_TRACKS`, `DEMO_FEAT`, `DEMO_SEED`, `DEMO_ARTIST`, `DEMO_SEARCH`).
+- `static/index.html` — entire single-page React UI in one file. No build step, Babel standalone compiles in-browser. Components: `App`, `MoodTab`, `SearchTab`, `MoodPlane`, `ArtistView`, `TrackRow`, `SkeletonList`. Also contains all CSS and demo data (`DEMO_TRACKS`, `DEMO_FEAT`, `DEMO_SEED`, `DEMO_ARTIST`, `DEMO_SEARCH`, `DEMO_TRENDING`).
+
+- `soundcharts.py` — unused. Can be deleted. Left over from a brief SoundCharts experiment that was reverted.
 
 ## Conventions / patterns
 
@@ -69,10 +80,10 @@ A dark/light toggle sits in the topbar (persisted to `localStorage["tonecard-the
 
 - **Restart Flask after Python edits** (Windows, PowerShell):
   ```powershell
-  Stop-Process -Id (Get-NetTCPConnection -LocalPort 5050 -ErrorAction SilentlyContinue).OwningProcess -Force -ErrorAction SilentlyContinue; cd "c:\Users\rushi\vscode projects\Spotifiy_Vibe"; .\.venv\Scripts\Activate.ps1; python app.py
+  Stop-Process -Id (Get-NetTCPConnection -LocalPort 5050 -ErrorAction SilentlyContinue).OwningProcess -Force -ErrorAction SilentlyContinue; cd "c:\Users\rushi\vscode projects\Spotifiy_Vibe"; .\venv\Scripts\Activate.ps1; python app.py
   ```
   The user has asked for this several times — it's fine to just do it without confirming.
-- **`.env`, `.cache`** are gitignored. Don't commit them. (There is no `.cache-user` anymore.) Required keys: `SPOTIFY_CLIENT_ID`, `SPOTIFY_CLIENT_SECRET`. See `.env.example`.
+- **`.env`, `.cache`** are gitignored. Don't commit them. Required keys: `SPOTIFY_CLIENT_ID`, `SPOTIFY_CLIENT_SECRET`. See `.env.example`.
 - **Per-app rate limit is global.** If the user hits it, even a different chat session can't dodge it — same `CLIENT_ID`. The only escape is wait (~100 min) or rotate to a second Spotify app. The mood-pool cache is the main defense — without it, every Mood click would re-run six searches.
 - **librosa is a heavyweight dependency.** `audio_analyze.py` imports it at module level, adding ~1–2 s cold-start on first import. That's expected.
 
@@ -81,6 +92,7 @@ A dark/light toggle sits in the topbar (persisted to `localStorage["tonecard-the
 - **Mood-only, public, no-login app.** OAuth + My Music + Stats + per-playlist tools were removed first; Search and Filter tabs were removed after that. The app now has Atlas (mood) + Lookup (search/artist) tabs — don't propose re-adding the old removed tabs without a direct ask.
 - **Mood plane uses Euclidean, not cosine** — discussed and decided.
 - **Mood seed pool is search-derived, not editorially curated.** Six broad-mood queries (`happy upbeat`, `sad emotional`, `chill mellow`, `energetic dance`, `melancholy slow`, `uplifting anthem`) give plane coverage without hand-picking tracks. If coverage feels uneven, expand the query list before reaching for a static seed list.
+- **SoundCharts was tried and reverted** — user chose to stay on ReccoBeats.
 
 ## Open ideas the user is weighing (don't presume)
 
@@ -97,3 +109,4 @@ A dark/light toggle sits in the topbar (persisted to `localStorage["tonecard-the
 - `reccobeats.py` is the renamed `filter_search.py` — older git history will show the old name. The module has no `filter_search` function anymore; it's purely ReccoBeats glue.
 - The mood presets are labeled **Still / Wired** (energy axis) and **Heavy / Bright** (valence axis) in the UI. Don't revert to old names like "Calm" or "Intense".
 - `audio_analyze.py` uses only the first 90 seconds of the uploaded file for speed. Valence estimation is a heuristic (major/minor key + tempo + brightness) — it will be imprecise on complex or atonal material. Don't over-engineer it; it's a directional signal, not a ground truth.
+- `artist_search()` uses `sp.search(type='track', q='artist:"Name"')` for the track list because `sp.artist_top_tracks()` is 403 for dev-mode apps. The search result is filtered to only include tracks where the artist name matches exactly.

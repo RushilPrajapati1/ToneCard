@@ -724,6 +724,53 @@
     }
     .artist-stats b { color: var(--ink-2); font-weight: 500; }
 
+    .trending-section { margin-bottom: 24px; }
+    .trending-label {
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 11px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 10px;
+    }
+    .trending-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+    .trending-pill {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 5px 12px 5px 5px;
+      border-radius: 99px;
+      border: 1px solid var(--line);
+      background: transparent;
+      cursor: pointer;
+      font-size: 13px;
+      color: var(--ink);
+      transition: background 120ms, border-color 120ms;
+      text-align: left;
+    }
+    .trending-pill:hover { background: var(--surface); border-color: var(--ink-3); }
+    .trending-pill:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    .trending-pill-img {
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      object-fit: cover;
+      flex-shrink: 0;
+      background: var(--line);
+    }
+    .trending-pill-ph {
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      background: var(--line);
+      flex-shrink: 0;
+    }
+    .trending-pill-name {
+      font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 140px;
+    }
+
     .foot {
       margin-top: 56px;
       padding-top: 18px;
@@ -929,6 +976,19 @@
       candidate_count: 6,
     };
 
+    const DEMO_TRENDING = [
+      { id: "dt1",  name: "Taylor Swift",      genres: ["pop"],                   image: null, url: null },
+      { id: "dt2",  name: "The Weeknd",         genres: ["canadian pop", "r&b"],   image: null, url: null },
+      { id: "dt3",  name: "Bad Bunny",          genres: ["latin", "reggaeton"],    image: null, url: null },
+      { id: "dt4",  name: "Drake",              genres: ["canadian pop", "hip hop"], image: null, url: null },
+      { id: "dt5",  name: "Billie Eilish",      genres: ["pop"],                   image: null, url: null },
+      { id: "dt6",  name: "SZA",                genres: ["r&b"],                   image: null, url: null },
+      { id: "dt7",  name: "Kendrick Lamar",     genres: ["hip hop"],               image: null, url: null },
+      { id: "dt8",  name: "Sabrina Carpenter",  genres: ["pop"],                   image: null, url: null },
+      { id: "dt9",  name: "Post Malone",        genres: ["pop", "hip hop"],        image: null, url: null },
+      { id: "dt10", name: "Dua Lipa",           genres: ["dance pop"],             image: null, url: null },
+    ];
+
     function SearchTab() {
       const [mode, setMode] = useState("track");
       const [query, setQuery] = useState("");
@@ -940,11 +1000,22 @@
       const [similarError, setSimilarError] = useState(null);
       // artist mode state
       const [artistResult, setArtistResult] = useState(null);
+      const [trendingArtists, setTrendingArtists] = useState([]);
+      const [trendingLoading, setTrendingLoading] = useState(false);
       // shared state
       const [loading, setLoading] = useState(false);
       const [error, setError] = useState(null);
       const [demoMode, setDemoMode] = useState(false);
       const [announcement, setAnnouncement] = useState("");
+
+      useEffect(() => {
+        if (mode !== "artist" || trendingArtists.length > 0) return;
+        setTrendingLoading(true);
+        safeFetch("/api/artists/trending")
+          .then(data => setTrendingArtists(data.artists || []))
+          .catch(err => { if (err.demo) setTrendingArtists(DEMO_TRENDING); })
+          .finally(() => setTrendingLoading(false));
+      }, [mode]);
 
       function switchMode(m) {
         setMode(m);
@@ -1090,6 +1161,32 @@
             <div className="error-wrap" role="alert">
               <span className="error-msg">{error}</span>
               <button className="error-retry" onClick={() => doSearch(query)}>Try again</button>
+            </div>
+          )}
+
+          {mode === "artist" && !artistResult && !loading && (
+            <div className="trending-section">
+              <div className="trending-label">
+                {trendingLoading ? "Loading…" : "Trending on Spotify"}
+              </div>
+              {!trendingLoading && trendingArtists.length > 0 && (
+                <div className="trending-grid" role="list">
+                  {trendingArtists.map(a => (
+                    <button
+                      key={a.id}
+                      className="trending-pill"
+                      role="listitem"
+                      onClick={() => { setQuery(a.name); doSearch(a.name); }}
+                    >
+                      {a.image
+                        ? <img src={a.image} alt="" className="trending-pill-img" />
+                        : <div className="trending-pill-ph" aria-hidden="true" />
+                      }
+                      <span className="trending-pill-name">{a.name}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 

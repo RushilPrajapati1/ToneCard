@@ -3,7 +3,7 @@ import tempfile
 
 from flask import Flask, jsonify, request, send_from_directory
 
-from analyze import artist_search, genre_search, genre_seed, mood_search, mood_seed, search_by_name
+from analyze import artist_search, genre_search, genre_seed, mood_search, mood_seed, search_by_name, trending_artists
 from audio_analyze import analyze_audio
 
 app = Flask(__name__, static_folder="static", static_url_path="")
@@ -117,6 +117,15 @@ def api_artist():
     if isinstance(data, dict) and data.get("error"):
         return jsonify(data), 404
     return jsonify(data)
+
+
+@app.route("/api/artists/trending")
+def api_artists_trending():
+    try:
+        data = trending_artists(limit=10)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    return jsonify({"artists": data})
 
 
 @app.route("/api/upload/analyze", methods=["POST"])
