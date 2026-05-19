@@ -46,6 +46,10 @@ _MOOD_SEED_QUERIES = (
     "energetic dance",
     "melancholy slow",
     "uplifting anthem",
+    "dark ambient",
+    "aggressive intense",
+    "romantic slow",
+    "party hype",
 )
 _POOL_TTL_SECONDS = 3600
 _POOL_PER_QUERY = 20
@@ -207,6 +211,7 @@ def genre_search(valence, energy, genre, count=10, market="US"):
             "album": (t.get("album") or {}).get("name", ""),
             "image": ((t.get("album") or {}).get("images") or [{}])[-1].get("url"),
             "url": (t.get("external_urls") or {}).get("spotify", ""),
+            "preview_url": t.get("preview_url"),
             "popularity": t.get("popularity", 0),
             "features": {
                 "valence": round(float(feat["valence"]), 3),
@@ -232,6 +237,7 @@ def _fmt_track(t, f):
         "album": (t.get("album") or {}).get("name", ""),
         "image": ((t.get("album") or {}).get("images") or [{}])[-1].get("url"),
         "url": (t.get("external_urls") or {}).get("spotify", ""),
+        "preview_url": t.get("preview_url"),
         "popularity": t.get("popularity", 0),
         "features": {
             "valence": round(float(f["valence"]), 3),
@@ -373,6 +379,7 @@ def artist_search(query, count=10, market="US"):
             "album": album.get("name", ""),
             "image": images[0].get("url") if images else None,
             "url": (t.get("external_urls") or {}).get("spotify"),
+            "preview_url": t.get("preview_url"),
             "popularity": t.get("popularity", 0),
             "features": {
                 "valence": round(float(v), 3) if v is not None else None,
@@ -493,6 +500,7 @@ def mood_search(valence, energy, count=10, market="US"):
             "album": (t.get("album") or {}).get("name", ""),
             "image": ((t.get("album") or {}).get("images") or [{}])[-1].get("url"),
             "url": (t.get("external_urls") or {}).get("spotify", ""),
+            "preview_url": t.get("preview_url"),
             "popularity": t.get("popularity", 0),
             "features": {
                 "valence": round(float(feat["valence"]), 3),

@@ -43,7 +43,8 @@
       "Bash(curl -s \"http://127.0.0.1:5050/api/artist?q=karan+aujla&count=10\")",
       "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); a=d.get\\('artist',{}\\); print\\('artist:', a.get\\('name'\\)\\); print\\('tracks:', len\\(d.get\\('tracks',[]\\)\\)\\); print\\('error:', d.get\\('error'\\)\\)\")",
       "Bash(curl -s \"http://127.0.0.1:5050/api/artist?q=karan+aujla&count=5\")",
-      "Bash(python3 -c ' *)"
+      "Bash(python3 -c ' *)",
+      "PowerShell(Stop-Process -Id \\(Get-NetTCPConnection -LocalPort 5050 -ErrorAction SilentlyContinue\\).OwningProcess -Force -ErrorAction SilentlyContinue; cd \"c:\\\\Users\\\\rushi\\\\vscode projects\\\\Spotifiy_Vibe\"; .\\\\venv\\\\Scripts\\\\Activate.ps1; python app.py)"
     ]
   }
 }
