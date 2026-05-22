@@ -7,3 +7,4 @@ venv/
 .cache
 .cache-user
 .reccobeats_cache.json
+.preview_cache.json

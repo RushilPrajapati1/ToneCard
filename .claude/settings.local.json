@@ -44,7 +44,14 @@
       "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); a=d.get\\('artist',{}\\); print\\('artist:', a.get\\('name'\\)\\); print\\('tracks:', len\\(d.get\\('tracks',[]\\)\\)\\); print\\('error:', d.get\\('error'\\)\\)\")",
       "Bash(curl -s \"http://127.0.0.1:5050/api/artist?q=karan+aujla&count=5\")",
       "Bash(python3 -c ' *)",
-      "PowerShell(Stop-Process -Id \\(Get-NetTCPConnection -LocalPort 5050 -ErrorAction SilentlyContinue\\).OwningProcess -Force -ErrorAction SilentlyContinue; cd \"c:\\\\Users\\\\rushi\\\\vscode projects\\\\Spotifiy_Vibe\"; .\\\\venv\\\\Scripts\\\\Activate.ps1; python app.py)"
+      "PowerShell(Stop-Process -Id \\(Get-NetTCPConnection -LocalPort 5050 -ErrorAction SilentlyContinue\\).OwningProcess -Force -ErrorAction SilentlyContinue; cd \"c:\\\\Users\\\\rushi\\\\vscode projects\\\\Spotifiy_Vibe\"; .\\\\venv\\\\Scripts\\\\Activate.ps1; python app.py)",
+      "Bash(./venv/bin/python -c ' *)",
+      "Bash(curl -s --retry 10 --retry-delay 1 --retry-connrefused \"http://127.0.0.1:5050/api/mood?valence=0.6&energy=0.6&count=6\")",
+      "Bash(./venv/bin/pip install *)",
+      "Bash(echo \"EXIT=$?\")",
+      "Read(//tmp/**)",
+      "Bash(ls -la)",
+      "Bash(cat MEMORY.md)"
     ]
   }
 }

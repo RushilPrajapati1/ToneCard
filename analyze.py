@@ -1,5 +1,6 @@
 import time
 
+from previews import fill_previews
 from reccobeats import get_features_for_spotify_ids
 from spotify_client import get_client
 
@@ -221,6 +222,8 @@ def genre_search(valence, energy, genre, count=10, market="US"):
             },
         })
 
+    fill_previews(items)
+
     return {
         "target": {"valence": target_v, "energy": target_e},
         "recommendations": items,
@@ -317,10 +320,14 @@ def search_by_name(q, count=10, market="US"):
             "energy": round(float(ce), 3),
         })
 
+    target = _fmt_track(top, feat)
+    similar = [_fmt_track(t, cfeat) for _, t, cfeat in scored[:count]]
+    fill_previews([target] + similar)
+
     return {
-        "track": _fmt_track(top, feat),
+        "track": target,
         "genre": genre,
-        "similar": [_fmt_track(t, cfeat) for _, t, cfeat in scored[:count]],
+        "similar": similar,
         "pool_points": pool_points,
         "candidate_count": len(candidates),
     }
@@ -397,6 +404,8 @@ def artist_search(query, count=10, market="US"):
                 "valence": round(float(v), 3),
                 "energy": round(float(e), 3),
             })
+
+    fill_previews(tracks)
 
     return {"artist": artist_info, "tracks": tracks, "points": points}
 
@@ -509,6 +518,8 @@ def mood_search(valence, energy, count=10, market="US"):
                 "danceability": round(float(feat["danceability"]), 2) if feat.get("danceability") is not None else None,
             },
         })
+
+    fill_previews(items)
 
     return {
         "target": {"valence": target_v, "energy": target_e},
