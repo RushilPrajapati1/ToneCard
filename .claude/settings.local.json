@@ -51,7 +51,23 @@
       "Bash(echo \"EXIT=$?\")",
       "Read(//tmp/**)",
       "Bash(ls -la)",
-      "Bash(cat MEMORY.md)"
+      "Bash(cat MEMORY.md)",
+      "Bash(./venv/bin/python app.py)",
+      "Bash(xcodebuild -version)",
+      "Bash(xcrun simctl *)",
+      "Bash(swift --version)",
+      "Bash(xcodebuild -project TonecardiOS.xcodeproj -scheme Tonecard -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 15' -configuration Debug build)",
+      "Bash(curl -s -o /dev/null -w \"HTTP %{http_code}\\\\n\" http://localhost:5050/ --max-time 5)",
+      "Read(//Users/rushi/Library/Developer/Xcode/DerivedData/**)",
+      "Read(//private/tmp/**)",
+      "Bash(curl -s \"http://localhost:5050/api/mood?valence=0.5&energy=0.5&count=2\" --max-time 60)",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\('keys:', list\\(d.keys\\(\\)\\)\\); t=d['recommendations'][0]; print\\('track keys:', list\\(t.keys\\(\\)\\)\\); print\\('feature keys:', list\\(t['features'].keys\\(\\)\\)\\)\")",
+      "Bash(curl -s \"http://localhost:5050/api/artists/trending\" --max-time 60)",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); a=d['artists'][0]; print\\('artist keys:', list\\(a.keys\\(\\)\\)\\)\")",
+      "Bash(curl -s \"http://localhost:5050/api/search?q=blinding+lights&count=2\" --max-time 60)",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\('top keys:', list\\(d.keys\\(\\)\\)\\); print\\('pool_point keys:', list\\(d['pool_points'][0].keys\\(\\)\\) if d.get\\('pool_points'\\) else 'none'\\)\")",
+      "Bash(curl -s \"http://localhost:5050/api/artist?q=dua+lipa&count=2\" --max-time 60)",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\('top keys:', list\\(d.keys\\(\\)\\)\\); print\\('artist keys:', list\\(d['artist'].keys\\(\\)\\)\\); print\\('point keys:', list\\(d['points'][0].keys\\(\\)\\) if d.get\\('points'\\) else 'none'\\)\")"
     ]
   }
 }
