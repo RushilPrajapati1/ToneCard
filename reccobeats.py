@@ -85,16 +85,23 @@ def get_features_for_spotify_ids(spotify_ids):
     Returns dict mapping spotify_id -> features dict. Tracks ReccoBeats doesn't
     have are silently dropped. Results are disk-cached by Spotify ID so repeated
     lookups across server restarts skip the ReccoBeats round-trip entirely.
+
+    Misses are cached too (as an empty dict) so tracks ReccoBeats lacks aren't
+    re-requested on every call — the same negative-caching trick previews.py uses.
     """
     uncached = [sid for sid in spotify_ids if sid not in _mem_cache]
 
     if uncached:
         s2r = _spotify_to_reccobeats_map(uncached)
-        if s2r:
-            feats = _fetch_features(list(s2r.values()))
-            new_entries = {sid: feats[rid] for sid, rid in s2r.items() if rid in feats}
-            _mem_cache.update(new_entries)
-            if new_entries:
-                _save_disk_cache()
+        feats = _fetch_features(list(s2r.values())) if s2r else {}
+        # Record every uncached id — real features when found, else {} as a
+        # "checked, not available" marker so we don't re-scrape dead tracks.
+        new_entries = {}
+        for sid in uncached:
+            rid = s2r.get(sid)
+            new_entries[sid] = feats.get(rid, {}) if rid else {}
+        _mem_cache.update(new_entries)
+        _save_disk_cache()
 
-    return {sid: _mem_cache[sid] for sid in spotify_ids if sid in _mem_cache}
+    # Skip the {} negative markers; only return real feature dicts.
+    return {sid: _mem_cache[sid] for sid in spotify_ids if _mem_cache.get(sid)}

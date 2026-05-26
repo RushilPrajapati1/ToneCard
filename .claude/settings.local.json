@@ -67,7 +67,16 @@
       "Bash(curl -s \"http://localhost:5050/api/search?q=blinding+lights&count=2\" --max-time 60)",
       "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\('top keys:', list\\(d.keys\\(\\)\\)\\); print\\('pool_point keys:', list\\(d['pool_points'][0].keys\\(\\)\\) if d.get\\('pool_points'\\) else 'none'\\)\")",
       "Bash(curl -s \"http://localhost:5050/api/artist?q=dua+lipa&count=2\" --max-time 60)",
-      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\('top keys:', list\\(d.keys\\(\\)\\)\\); print\\('artist keys:', list\\(d['artist'].keys\\(\\)\\)\\); print\\('point keys:', list\\(d['points'][0].keys\\(\\)\\) if d.get\\('points'\\) else 'none'\\)\")"
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\('top keys:', list\\(d.keys\\(\\)\\)\\); print\\('artist keys:', list\\(d['artist'].keys\\(\\)\\)\\); print\\('point keys:', list\\(d['points'][0].keys\\(\\)\\) if d.get\\('points'\\) else 'none'\\)\")",
+      "Bash(cat .gitignore)",
+      "Bash(cat .env.example)",
+      "Bash(cat requirements.txt)",
+      "Bash(cat Procfile)",
+      "Bash(cat Dockerfile)",
+      "Bash(cat runtime.txt)",
+      "Bash(./venv/bin/python -m py_compile app.py analyze.py audio_analyze.py previews.py reccobeats.py spotify_client.py)",
+      "Bash(which swift *)",
+      "Bash(xargs kill -9)"
     ]
   }
 }
