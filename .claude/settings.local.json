@@ -76,7 +76,9 @@
       "Bash(cat runtime.txt)",
       "Bash(./venv/bin/python -m py_compile app.py analyze.py audio_analyze.py previews.py reccobeats.py spotify_client.py)",
       "Bash(which swift *)",
-      "Bash(xargs kill -9)"
+      "Bash(xargs kill -9)",
+      "mcp__claude_ai_Hugging_Face__hub_repo_search",
+      "mcp__claude_ai_Hugging_Face__hf_hub_query"
     ]
   }
 }
