@@ -32,7 +32,7 @@ A dark/light toggle sits in the topbar (persisted to `localStorage["tonecard-the
 
 ## Files and what they own
 
-- `app.py` — Flask routes only, no business logic. Routes:
+- `app.py` — Flask routes only, no business logic. Also owns the production hardening: per-IP sliding-window rate limiting (120/min on `/api/*`, 6/min on uploads; in-memory, per-process), security headers, a `_api_error()` helper that logs the real exception and returns a generic message (never echo `str(e)` to clients — it leaks internals; Spotify 429s get a friendly 429), `market` validated to two letters (falls back to `US`), and `genre` on the `/api/genre*` endpoints validated against `ALLOWED_GENRES` from `analyze.py` (mirrors the UI chips — arbitrary genre strings were a rate-limit/memory DoS vector). `ProxyFix` is applied when `TRUST_PROXY=1` so rate limiting sees real client IPs behind a load balancer. Routes:
   - `/` — serves `static/index.html`
   - `/api/mood/seed` — returns the full seed pool as `{id, name, artists, valence, energy}` points
   - `/api/mood` — query params `valence`, `energy`, `count` (1–25), `market` (default US). Returns nearest tracks by mood.
@@ -42,6 +42,7 @@ A dark/light toggle sits in the topbar (persisted to `localStorage["tonecard-the
   - `/api/artist` — query params `q`, `count` (1–20), `market`. Find artist → returns artist profile, top tracks with features, mood plane points.
   - `/api/artists/trending` — returns top 10 artists from a curated seed list (cached 1 hour).
   - `/api/upload/analyze` (POST) — upload audio file (mp3/wav/flac/ogg/m4a, max 30 MB). Returns estimated `{valence, energy, tempo}`.
+  - `/healthz` — health check for deploy platforms (no rate limit, no Spotify calls).
 
 - `spotify_client.py` — single client-credentials Spotipy client. Includes proxy-env hardening (some local network setups break Spotify auth via global `HTTP_PROXY`/`NO_PROXY`).
 
@@ -69,10 +70,13 @@ A dark/light toggle sits in the topbar (persisted to `localStorage["tonecard-the
 
 - `static/index.html` — entire single-page React UI in one file. No build step, Babel standalone compiles in-browser. Components: `App`, `MoodTab`, `SearchTab`, `MoodPlane`, `ArtistView`, `TrackRow`, `SkeletonList`. Also contains all CSS and demo data (`DEMO_TRACKS`, `DEMO_FEAT`, `DEMO_SEED`, `DEMO_ARTIST`, `DEMO_SEARCH`, `DEMO_TRENDING`).
 
+- `gunicorn.conf.py`, `Dockerfile`, `.dockerignore`, `render.yaml`, `DEPLOY.md` — production deployment. Gunicorn runs 1 worker × 8 threads (threads, not workers: the pool caches and rate limiter are per-process, and more processes multiply Spotify API usage against the global per-app limit). The Docker image installs ffmpeg so librosa can decode mp3/m4a uploads. Keep deployments to a single instance unless shared caching is added first. See `DEPLOY.md` for Render/Fly/Cloud Run specifics.
+
 - `soundcharts.py` — unused. Can be deleted. Left over from a brief SoundCharts experiment that was reverted.
 
 ## Conventions / patterns
 
+- **Pool builds are serialized behind locks** (`_pool_lock`, `_genre_lock` in `analyze.py`) so concurrent requests can't stampede the seed searches under a threaded server, and `_GENRE_CACHE` is bounded (`_GENRE_CACHE_MAX = 64`, oldest-evicted) because `search_by_name` keys it by arbitrary Spotify artist genres. The two disk caches take a snapshot under a lock and write through a unique temp file + atomic `os.replace`.
 - **Mood pool is cached for an hour** (`_POOL_TTL_SECONDS = 3600` in `analyze.py`) keyed by `market`. The first request after expiry pays the full cost (ten Spotify searches + one ReccoBeats batch). Genre pools follow the same pattern (keyed by `genre+market`). If you change the seed queries or count, expect a one-time latency spike on the next click.
 - **Mood uses Euclidean over `(valence, energy)` only.** Cosine would treat unrelated dimensions as if they shared a direction; absolute distance matters here (a happy-calm track is not "similar" to a happy-intense one even if the angle is close). Don't switch the metric.
 - **Demo-mode fallback in fetches.** `safeFetch` in `static/index.html` sets `err.demo = true` on network failure (no `e.status`). Each fetcher catches this and substitutes hardcoded demo data so the UI is always navigable. Real API errors (with `e.status`) need explicit handling — easy to forget, and silent failures *will* happen if you don't.
@@ -111,9 +115,8 @@ A dark/light toggle sits in the topbar (persisted to `localStorage["tonecard-the
 - Persisting the Spotify *candidate* lists (not just ReccoBeats features) to disk, so the pool survives restarts without re-running the seed searches.
 - Parallelizing the cold-start pool build (the ten seed searches currently run sequentially).
 - Surfacing cold-start latency in the UI (the first Mood click can take many seconds with only a skeleton showing).
-- Production deploy (Render / Fly / Cloud Run) — easier now that there's no per-user state.
 
-Already shipped (were open ideas): 30-second preview playback per row (`previews.py` + `TrackRow` ▶ button), and disk-caching ReccoBeats features (`.reccobeats_cache.json`).
+Already shipped (were open ideas): 30-second preview playback per row (`previews.py` + `TrackRow` ▶ button), disk-caching ReccoBeats features (`.reccobeats_cache.json`), and production deploy scaffolding (Dockerfile + gunicorn + `render.yaml` + `DEPLOY.md` — not yet actually deployed anywhere).
 
 ## Gotchas worth flagging if you trip on them
 

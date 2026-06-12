@@ -1,0 +1,16 @@
+.git
+.env
+.cache
+.cache-user
+venv/
+.venv/
+__pycache__/
+*.pyc
+.reccobeats_cache.json
+.preview_cache.json
+soundcharts_cache.json
+ios/
+.claude/
+.agents/
+.impeccable/
+*.md

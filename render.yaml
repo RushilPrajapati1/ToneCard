@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: tonecard
+    runtime: docker
+    plan: starter
+    healthCheckPath: /healthz
+    envVars:
+      - key: SPOTIFY_CLIENT_ID
+        sync: false
+      - key: SPOTIFY_CLIENT_SECRET
+        sync: false
+      - key: TRUST_PROXY
+        value: "1"

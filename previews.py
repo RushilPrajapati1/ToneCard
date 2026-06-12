@@ -2,6 +2,8 @@ import json
 import os
 import pathlib
 import re
+import tempfile
+import threading
 from concurrent.futures import ThreadPoolExecutor
 
 import requests
@@ -21,6 +23,7 @@ _CACHE_PATH = pathlib.Path(__file__).parent / ".preview_cache.json"
 # Keys are Spotify track IDs; values are preview URLs, or "" meaning
 # "checked, none available" (so we don't re-scrape dead tracks).
 _mem_cache: dict = {}
+_cache_lock = threading.Lock()
 
 _DIRECT_RE = re.compile(r"https://p\.scdn\.co/mp3-preview/[A-Za-z0-9]+")
 _ESCAPED_RE = re.compile(r"https:\\/\\/p\.scdn\.co\\/mp3-preview\\/[A-Za-z0-9]+")
@@ -36,14 +39,18 @@ def _load_disk_cache() -> None:
 
 
 def _save_disk_cache() -> None:
-    tmp = _CACHE_PATH.with_suffix(".tmp")
+    # Unique temp file per writer so concurrent saves can't interleave;
+    # os.replace keeps the swap atomic.
+    with _cache_lock:
+        snapshot = dict(_mem_cache)
     try:
-        with open(tmp, "w", encoding="utf-8") as f:
-            json.dump(_mem_cache, f, separators=(",", ":"))
+        fd, tmp = tempfile.mkstemp(dir=_CACHE_PATH.parent, suffix=".tmp")
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
+            json.dump(snapshot, f, separators=(",", ":"))
         os.replace(tmp, _CACHE_PATH)
     except Exception:
         try:
-            tmp.unlink(missing_ok=True)
+            os.unlink(tmp)
         except Exception:
             pass
 
@@ -92,10 +99,11 @@ def fill_previews(tracks):
         ids = [t["id"] for t in pending]
         with ThreadPoolExecutor(max_workers=min(_MAX_WORKERS, len(ids))) as ex:
             resolved = dict(zip(ids, ex.map(_scrape_preview, ids)))
-        for t in pending:
-            url = resolved.get(t["id"], "")
-            _mem_cache[t["id"]] = url
-            t["preview_url"] = url or None
+        with _cache_lock:
+            for t in pending:
+                url = resolved.get(t["id"], "")
+                _mem_cache[t["id"]] = url
+                t["preview_url"] = url or None
         _save_disk_cache()
 
     return tracks

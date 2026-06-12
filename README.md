@@ -54,6 +54,15 @@ Then open http://127.0.0.1:5050.
 
 The dev server runs with `debug=False` — when you change Python files, restart the process to pick them up. The single-page React UI in `static/index.html` reloads on browser refresh (it's compiled in-browser via Babel standalone).
 
+## Deploy
+
+The app ships as a Docker image (gunicorn + ffmpeg). See [DEPLOY.md](DEPLOY.md) for Render, Fly.io, and Cloud Run instructions, or run it production-style locally:
+
+```bash
+docker build -t tonecard .
+docker run --rm -p 5050:5050 --env-file .env tonecard
+```
+
 ## API endpoints
 
 | Method | Path                                     | Purpose |

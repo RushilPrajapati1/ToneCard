@@ -78,7 +78,15 @@
       "Bash(which swift *)",
       "Bash(xargs kill -9)",
       "mcp__claude_ai_Hugging_Face__hub_repo_search",
-      "mcp__claude_ai_Hugging_Face__hf_hub_query"
+      "mcp__claude_ai_Hugging_Face__hf_hub_query",
+      "Bash(echo \"exit: $?\")",
+      "Bash(./venv/bin/python -m py_compile app.py analyze.py previews.py reccobeats.py audio_analyze.py spotify_client.py gunicorn.conf.py)",
+      "Bash(curl -s -i http://127.0.0.1:5050/healthz)",
+      "Bash(curl -s -w \" [%{http_code}]\" \"http://127.0.0.1:5050/api/genre?genre=zzzz&valence=0.5&energy=0.5\")",
+      "Bash(curl -s -w \" [%{http_code}]\" \"http://127.0.0.1:5050/api/mood?valence=nan&energy=0.5\")",
+      "Bash(curl -s -w \" [%{http_code}]\" \"http://127.0.0.1:5050/api/genre/seed?genre=zzzz&market=XXXXX\")",
+      "Bash(./venv/bin/gunicorn --config gunicorn.conf.py app:app)",
+      "Bash(curl -s -w \" [%{http_code}]\" http://127.0.0.1:5050/healthz)"
     ]
   }
 }

@@ -2,6 +2,7 @@ import json
 import os
 import pathlib
 import tempfile
+import threading
 
 import requests
 
@@ -14,6 +15,7 @@ _CACHE_PATH = pathlib.Path(__file__).parent / ".reccobeats_cache.json"
 # In-memory mirror of the disk cache; loaded once at import.
 # Keys are Spotify track IDs; values are ReccoBeats feature dicts.
 _mem_cache: dict = {}
+_cache_lock = threading.Lock()
 
 
 def _load_disk_cache() -> None:
@@ -26,14 +28,18 @@ def _load_disk_cache() -> None:
 
 
 def _save_disk_cache() -> None:
-    tmp = _CACHE_PATH.with_suffix(".tmp")
+    # Unique temp file per writer so concurrent saves can't interleave;
+    # os.replace keeps the swap atomic.
+    with _cache_lock:
+        snapshot = dict(_mem_cache)
     try:
-        with open(tmp, "w", encoding="utf-8") as f:
-            json.dump(_mem_cache, f, separators=(",", ":"))
+        fd, tmp = tempfile.mkstemp(dir=_CACHE_PATH.parent, suffix=".tmp")
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
+            json.dump(snapshot, f, separators=(",", ":"))
         os.replace(tmp, _CACHE_PATH)
     except Exception:
         try:
-            tmp.unlink(missing_ok=True)
+            os.unlink(tmp)
         except Exception:
             pass
 
@@ -100,7 +106,8 @@ def get_features_for_spotify_ids(spotify_ids):
         for sid in uncached:
             rid = s2r.get(sid)
             new_entries[sid] = feats.get(rid, {}) if rid else {}
-        _mem_cache.update(new_entries)
+        with _cache_lock:
+            _mem_cache.update(new_entries)
         _save_disk_cache()
 
     # Skip the {} negative markers; only return real feature dicts.

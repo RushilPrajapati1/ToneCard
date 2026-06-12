@@ -1,3 +1,5 @@
+import math
+import threading
 import time
 
 from previews import fill_previews
@@ -6,6 +8,14 @@ from spotify_client import get_client
 
 
 SPOTIFY_MAX_PER_PAGE = 10
+
+# Genres the public /api/genre endpoints accept — mirrors the chip lists in
+# static/index.html and the iOS app. Internal genre pools (artist genres in
+# search_by_name) are not restricted to this list.
+ALLOWED_GENRES = frozenset({
+    "pop", "hip hop", "rock", "r&b", "electronic", "jazz",
+    "classical", "latin", "punjabi", "metal", "country", "indie",
+})
 
 
 def _search_tracks(query, total=30, market="US"):
@@ -56,18 +66,32 @@ _POOL_TTL_SECONDS = 3600
 _POOL_PER_QUERY = 20
 
 _pool_cache = {"candidates": None, "features": None, "ts": 0.0, "market": None}
+_pool_lock = threading.Lock()
 
 
-def _load_mood_pool(market="US"):
-    now = time.time()
-    if (
+def _mood_pool_fresh(market, now):
+    return (
         _pool_cache["candidates"]
         and _pool_cache["features"]
         and _pool_cache["market"] == market
         and now - _pool_cache["ts"] < _POOL_TTL_SECONDS
-    ):
+    )
+
+
+def _load_mood_pool(market="US"):
+    now = time.time()
+    if _mood_pool_fresh(market, now):
         return _pool_cache["candidates"], _pool_cache["features"]
 
+    with _pool_lock:
+        # Another request may have rebuilt the pool while we waited on the lock.
+        now = time.time()
+        if _mood_pool_fresh(market, now):
+            return _pool_cache["candidates"], _pool_cache["features"]
+        return _build_mood_pool(market, now)
+
+
+def _build_mood_pool(market, now):
     seen = {}
     for q in _MOOD_SEED_QUERIES:
         try:
@@ -118,33 +142,48 @@ def mood_seed(market="US"):
 _GENRE_CACHE = {}  # key: "genre:market" -> {candidates, features, ts}
 _GENRE_TTL = 3600
 _GENRE_TRACKS = 60  # more tracks → denser plane
+_GENRE_CACHE_MAX = 64  # search_by_name keys this by arbitrary artist genres — keep it bounded
+_genre_lock = threading.Lock()
+
+
+def _genre_pool_fresh(cached, now):
+    return (
+        cached
+        and cached.get("candidates")
+        and cached.get("features")
+        and now - cached.get("ts", 0) < _GENRE_TTL
+    )
 
 
 def _load_genre_pool(genre, market="US"):
     key = f"{genre}:{market}"
     now = time.time()
     cached = _GENRE_CACHE.get(key)
-    if (
-        cached
-        and cached.get("candidates")
-        and cached.get("features")
-        and now - cached.get("ts", 0) < _GENRE_TTL
-    ):
+    if _genre_pool_fresh(cached, now):
         return cached["candidates"], cached["features"]
 
-    try:
-        tracks = _search_tracks(genre, total=_GENRE_TRACKS, market=market)
-    except Exception:
-        tracks = []
+    with _genre_lock:
+        now = time.time()
+        cached = _GENRE_CACHE.get(key)
+        if _genre_pool_fresh(cached, now):
+            return cached["candidates"], cached["features"]
 
-    ids = [t["id"] for t in tracks if t.get("id")]
-    try:
-        features = get_features_for_spotify_ids(ids) if ids else {}
-    except Exception:
-        features = {}
+        try:
+            tracks = _search_tracks(genre, total=_GENRE_TRACKS, market=market)
+        except Exception:
+            tracks = []
 
-    _GENRE_CACHE[key] = {"candidates": tracks, "features": features, "ts": now}
-    return tracks, features
+        ids = [t["id"] for t in tracks if t.get("id")]
+        try:
+            features = get_features_for_spotify_ids(ids) if ids else {}
+        except Exception:
+            features = {}
+
+        if len(_GENRE_CACHE) >= _GENRE_CACHE_MAX:
+            oldest = min(_GENRE_CACHE, key=lambda k: _GENRE_CACHE[k].get("ts", 0))
+            _GENRE_CACHE.pop(oldest, None)
+        _GENRE_CACHE[key] = {"candidates": tracks, "features": features, "ts": now}
+        return tracks, features
 
 
 def genre_seed(genre, market="US"):
@@ -173,10 +212,14 @@ def genre_seed(genre, market="US"):
 def genre_search(valence, energy, genre, count=10, market="US"):
     """Return tracks closest to (valence, energy) from the given genre pool."""
     try:
-        target_v = max(0.0, min(1.0, float(valence)))
-        target_e = max(0.0, min(1.0, float(energy)))
+        target_v = float(valence)
+        target_e = float(energy)
     except (TypeError, ValueError):
         return {"error": "invalid coordinates"}
+    if math.isnan(target_v) or math.isnan(target_e):
+        return {"error": "invalid coordinates"}
+    target_v = max(0.0, min(1.0, target_v))
+    target_e = max(0.0, min(1.0, target_e))
 
     candidates, features = _load_genre_pool(genre, market=market)
     if not candidates or not features:
@@ -470,10 +513,14 @@ def trending_artists(limit=10):
 def mood_search(valence, energy, count=10, market="US"):
     """Return tracks whose audio features sit closest to a (valence, energy) target."""
     try:
-        target_v = max(0.0, min(1.0, float(valence)))
-        target_e = max(0.0, min(1.0, float(energy)))
+        target_v = float(valence)
+        target_e = float(energy)
     except (TypeError, ValueError):
         return {"error": "invalid coordinates"}
+    if math.isnan(target_v) or math.isnan(target_e):
+        return {"error": "invalid coordinates"}
+    target_v = max(0.0, min(1.0, target_v))
+    target_e = max(0.0, min(1.0, target_e))
 
     candidates, features = _load_mood_pool(market=market)
     if not candidates or not features:
